@@ -1,0 +1,20 @@
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.database import Base
+from app.models._mixins import TimestampMixin
+
+
+class Participant(Base, TimestampMixin):
+    __tablename__ = "participants"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tournament_id: Mapped[int] = mapped_column(ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    team: Mapped[str | None] = mapped_column(String(120))
+    category: Mapped[str | None] = mapped_column(String(80))
+    seed: Mapped[int | None] = mapped_column(Integer)
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id", ondelete="SET NULL"))
+
+    tournament: Mapped["Tournament"] = relationship(back_populates="participants")  # noqa: F821
+    group: Mapped["Group | None"] = relationship(back_populates="participants")  # noqa: F821
