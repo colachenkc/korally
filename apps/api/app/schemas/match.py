@@ -37,3 +37,11 @@ class MatchStart(BaseModel):
 class MatchFinish(BaseModel):
     winner_side: str  # "A" | "B"
     score_summary: str | None = None
+
+
+class MatchUpdate(BaseModel):
+    player_a_name_manual: str | None = None
+    player_b_name_manual: str | None = None
+    winner_name_manual: str | None = None
+    score_summary: str | None = None
+    category_label: str | None = None

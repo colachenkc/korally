@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.core.auth import require_admin
 from app.models.match import Match
-from app.schemas.match import MatchRead
+from app.schemas.match import MatchRead, MatchUpdate
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
@@ -24,4 +25,20 @@ def get_match(match_id: int, db: Session = Depends(get_db)) -> Match:
     match = db.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+    return match
+
+
+@router.patch(
+    "/{match_id}",
+    response_model=MatchRead,
+    dependencies=[Depends(require_admin)],
+)
+def update_match(match_id: int, payload: MatchUpdate, db: Session = Depends(get_db)) -> Match:
+    match = db.get(Match, match_id)
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(match, field, value)
+    db.commit()
+    db.refresh(match)
     return match
