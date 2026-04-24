@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.core.database import Base, engine
 from app import models  # noqa: F401  ensure model classes are registered with Base
 
-UPLOAD_ROOT = Path(__file__).resolve().parent.parent / "uploads"
+UPLOAD_ROOT = Path(settings.upload_root).resolve()
 
 
 @asynccontextmanager

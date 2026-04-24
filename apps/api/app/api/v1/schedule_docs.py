@@ -6,13 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.auth import require_admin
+from app.core.config import settings
 from app.models.announcement import ScheduleAnnouncement
 from app.models.tournament import Tournament
 from app.schemas.announcement import ScheduleAnnouncementRead
 
 router = APIRouter(prefix="/schedule-docs", tags=["schedule-docs"])
 
-UPLOAD_ROOT = Path(__file__).resolve().parents[3] / "uploads"
+UPLOAD_ROOT = Path(settings.upload_root).resolve()
 SCHEDULE_DIR = UPLOAD_ROOT / "schedule"
 MAX_PDF_BYTES = 20 * 1024 * 1024
 

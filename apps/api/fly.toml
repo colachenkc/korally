@@ -1,0 +1,46 @@
+# fly.toml — Match Monitor API
+#
+# 首次部署前：
+#   1. 執行 `fly launch --no-deploy --copy-config`，讓 fly 幫你選一個全球唯一的 app 名字
+#      （它會覆寫下面的 app 欄位）。
+#   2. 建 volume：`fly volumes create data --size 1 --region nrt`
+#   3. 設 secrets：`fly secrets set ADMIN_PASSWORD=xxx SESSION_SECRET=xxx CORS_ORIGINS='["https://你的前端.vercel.app"]'`
+#   4. 部署：`fly deploy`
+
+app = "match-monitor-api"
+primary_region = "nrt"
+
+[build]
+
+[env]
+  # SQLite 放在 persistent volume 上，避免部署後資料遺失
+  DATABASE_URL = "sqlite:////data/match_monitor.db"
+  # 上傳的 PDF 也放在 volume 上
+  UPLOAD_ROOT = "/data/uploads"
+  # 跨網域 cookie（前端在 Vercel、後端在 Fly）必須是 secure + samesite=none
+  COOKIE_SECURE = "true"
+  COOKIE_SAMESITE = "none"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # SQLite 必須單機寫入，所以關掉 auto stop / 固定一台機器
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  cpus = 1
