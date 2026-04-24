@@ -112,7 +112,7 @@ export function AppHeader() {
                 className="h-11 w-11 rounded-md md:h-10 md:w-10"
                 priority
               />
-              <span className="font-serif text-4xl font-semibold italic md:text-3xl">Conistem</span>
+              <span className="font-sans text-4xl font-bold tracking-tight md:text-3xl">conistem</span>
             </Link>
 
             {/* Desktop nav */}
