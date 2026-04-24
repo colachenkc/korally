@@ -48,7 +48,7 @@ fly volumes create data --size 1 --region nrt
 fly secrets set \
   ADMIN_PASSWORD='pick-a-memorable-password' \
   SESSION_SECRET="$(python -c 'import secrets;print(secrets.token_urlsafe(32))')" \
-  CORS_ORIGINS='["https://<your-frontend>.vercel.app"]'
+  CORS_ORIGINS='["http://localhost:3000"]'
 
 # 6. Deploy
 fly deploy

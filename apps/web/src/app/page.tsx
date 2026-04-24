@@ -24,24 +24,24 @@ export default async function HomePage() {
   return (
     <>
       <div className="flex min-h-[calc(100vh-160px)] flex-col">
-        <div className="space-y-20">
+        <div className="space-y-10 md:space-y-20">
           {tournament ? (
-            <section className="pt-6">
+            <section className="pt-2 md:pt-6">
               <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-ink-muted">
                 Tournament
               </div>
-              <h1 className="mt-5 font-serif text-5xl font-medium italic leading-[1.05] tracking-tight text-ink md:text-6xl lg:text-7xl">
+              <h1 className="mt-3 font-serif text-3xl font-medium italic leading-[1.1] tracking-tight text-ink sm:text-4xl md:mt-5 md:text-6xl md:leading-[1.05] lg:text-7xl">
                 {tournament.name}
               </h1>
 
-              <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-ink-soft">
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-ink-soft md:mt-8 md:gap-x-5 md:gap-y-2">
                 {tournament.venue ? (
-                  <span className="text-lg md:text-xl">{tournament.venue}</span>
+                  <span className="text-base md:text-xl">{tournament.venue}</span>
                 ) : null}
                 {tournament.start_date ? (
                   <>
                     <span className="text-ink-faint">·</span>
-                    <span className="font-mono text-base text-ink-muted">
+                    <span className="font-mono text-sm text-ink-muted md:text-base">
                       {tournament.start_date}
                       {tournament.end_date && tournament.end_date !== tournament.start_date
                         ? ` → ${tournament.end_date}`
@@ -49,19 +49,21 @@ export default async function HomePage() {
                     </span>
                   </>
                 ) : null}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-6">
                 <span className="rounded-full border border-ink/15 bg-white/60 px-3 py-1 text-xs font-medium text-ink-soft backdrop-blur">
                   {statusLabel(tournament.status)}
                 </span>
+                {tournament.current_schedule_time ? (
+                  <div className="inline-flex items-center gap-2 rounded-full bg-accent-butter/50 px-3 py-1 text-xs text-ink backdrop-blur md:py-1.5 md:text-sm">
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-ink-muted md:text-[11px]">
+                      now
+                    </span>
+                    <span className="font-medium">{tournament.current_schedule_time}</span>
+                  </div>
+                ) : null}
               </div>
-
-              {tournament.current_schedule_time ? (
-                <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent-butter/50 px-3 py-1.5 text-sm text-ink backdrop-blur">
-                  <span className="font-mono text-[11px] uppercase tracking-widest text-ink-muted">
-                    now
-                  </span>
-                  <span className="font-medium">{tournament.current_schedule_time}</span>
-                </div>
-              ) : null}
             </section>
           ) : (
             <section className="rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-4 text-sm text-accent-coral">
@@ -91,7 +93,7 @@ export default async function HomePage() {
           </section>
         </div>
 
-        <div className="mt-auto pt-16">
+        <div className="mt-auto pt-8 md:pt-16">
           <Marquee />
         </div>
       </div>
