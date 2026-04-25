@@ -21,9 +21,11 @@ class Table(Base, TimestampMixin):
     referees_text: Mapped[str | None] = mapped_column(Text)
 
     # Active "no-show / 唱名未到" call. NULL when no call active.
+    # Lifecycle: raise → (optionally) broadcast → clear when player arrives.
     call_side: Mapped[str | None] = mapped_column(String(8))  # "A" | "B" | "BOTH"
     call_player_name: Mapped[str | None] = mapped_column(Text)  # snapshot for broadcast
     call_created_at: Mapped[datetime | None] = mapped_column(DateTime)
+    call_broadcasted_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     tournament: Mapped["Tournament"] = relationship(back_populates="tables")  # noqa: F821
     current_match: Mapped["Match | None"] = relationship(  # noqa: F821

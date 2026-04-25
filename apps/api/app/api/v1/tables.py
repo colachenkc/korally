@@ -143,6 +143,7 @@ def finish_match(table_id: int, payload: MatchFinish, db: Session = Depends(get_
     table.call_side = None
     table.call_player_name = None
     table.call_created_at = None
+    table.call_broadcasted_at = None
     db.commit()
     db.refresh(match)
     return match
@@ -177,6 +178,24 @@ def raise_call(table_id: int, payload: TableCallCreate, db: Session = Depends(ge
     table.call_side = payload.side
     table.call_player_name = snapshot
     table.call_created_at = datetime.now(timezone.utc)
+    table.call_broadcasted_at = None
+    db.commit()
+    db.refresh(table)
+    return table
+
+
+@router.post(
+    "/{table_id}/call/broadcast",
+    response_model=TableWithCurrentMatch,
+    dependencies=[Depends(require_admin)],
+)
+def mark_call_broadcasted(table_id: int, db: Session = Depends(get_db)) -> Table:
+    table = db.get(Table, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+    if not table.call_side:
+        raise HTTPException(status_code=400, detail="Table has no active call")
+    table.call_broadcasted_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(table)
     return table
@@ -194,6 +213,7 @@ def clear_call(table_id: int, db: Session = Depends(get_db)) -> Table:
     table.call_side = None
     table.call_player_name = None
     table.call_created_at = None
+    table.call_broadcasted_at = None
     db.commit()
     db.refresh(table)
     return table

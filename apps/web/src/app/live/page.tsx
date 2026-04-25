@@ -62,6 +62,18 @@ export default function LivePage() {
     }
   }
 
+  async function markBroadcasted(tableId: number) {
+    setBusyTableId(tableId);
+    try {
+      await apiPost(`/tables/${tableId}/call/broadcast`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "標記廣播失敗");
+    } finally {
+      setBusyTableId(null);
+    }
+  }
+
   async function clearCall(tableId: number) {
     setBusyTableId(tableId);
     try {
@@ -80,7 +92,7 @@ export default function LivePage() {
     idle: tables.filter((t) => t.status === "idle").length,
   };
 
-  const calling = tables.filter((t) => t.call_side);
+  const pendingBroadcast = tables.filter((t) => t.call_side && !t.call_broadcasted_at);
 
   return (
     <div className="space-y-6">
@@ -102,12 +114,12 @@ export default function LivePage() {
         <SummaryChip label="空閒" value={summary.idle} tone="cream" />
       </div>
 
-      {calling.length > 0 ? (
+      {pendingBroadcast.length > 0 ? (
         <CallBanner
-          tables={calling}
+          tables={pendingBroadcast}
           isAuthed={isAuthed}
           busyTableId={busyTableId}
-          onClear={clearCall}
+          onBroadcast={markBroadcasted}
         />
       ) : null}
 
@@ -164,12 +176,12 @@ function CallBanner({
   tables,
   isAuthed,
   busyTableId,
-  onClear,
+  onBroadcast,
 }: {
   tables: TableItem[];
   isAuthed: boolean;
   busyTableId: number | null;
-  onClear: (id: number) => void;
+  onBroadcast: (id: number) => void;
 }) {
   return (
     <div className="rounded-2xl border border-accent-coral/40 bg-accent-coral/10 p-4 shadow-card">
@@ -199,7 +211,7 @@ function CallBanner({
             </div>
             {isAuthed ? (
               <button
-                onClick={() => onClear(t.id)}
+                onClick={() => onBroadcast(t.id)}
                 disabled={busyTableId === t.id}
                 className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-ink-soft disabled:opacity-50"
               >
@@ -282,16 +294,23 @@ function LiveTableCard({
   const match = table.current_match;
   const refs = table.referees_text?.trim();
   const calling = !!table.call_side;
+  const callPending = calling && !table.call_broadcasted_at;
 
-  const accentBar = calling
+  const accentBar = callPending
     ? "before:bg-accent-coral"
-    : table.status === "in_progress"
-      ? "before:bg-accent-sky"
-      : table.status === "delayed"
-        ? "before:bg-accent-coral"
-        : "before:bg-cream-200";
+    : calling
+      ? "before:bg-accent-butter"
+      : table.status === "in_progress"
+        ? "before:bg-accent-sky"
+        : table.status === "delayed"
+          ? "before:bg-accent-coral"
+          : "before:bg-cream-200";
 
-  const cardBg = calling ? "bg-accent-coral/10" : "bg-white";
+  const cardBg = callPending
+    ? "bg-accent-coral/10"
+    : calling
+      ? "bg-accent-butter/15"
+      : "bg-white";
 
   return (
     <div
@@ -326,9 +345,20 @@ function LiveTableCard({
       )}
 
       {calling ? (
-        <div className="mt-1.5 rounded-lg border border-accent-coral/40 bg-white/70 px-2 py-1.5">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-accent-coral">
-            唱名未到 · {table.call_side ? SIDE_LABEL[table.call_side] : ""}
+        <div
+          className={`mt-1.5 rounded-lg border px-2 py-1.5 ${
+            table.call_broadcasted_at
+              ? "border-accent-butter bg-accent-butter/30"
+              : "border-accent-coral/40 bg-white/70"
+          }`}
+        >
+          <div
+            className={`font-mono text-[10px] uppercase tracking-widest ${
+              table.call_broadcasted_at ? "text-ink-soft" : "text-accent-coral"
+            }`}
+          >
+            {table.call_broadcasted_at ? "已廣播 · 等選手到" : "唱名未到 · 待廣播"}
+            {table.call_side ? ` · ${SIDE_LABEL[table.call_side]}` : ""}
           </div>
           <div className="truncate text-sm font-semibold text-ink">
             {table.call_player_name}
@@ -339,7 +369,7 @@ function LiveTableCard({
               disabled={busy}
               className="mt-1.5 w-full rounded-md bg-ink px-2 py-1 text-xs font-medium text-cream-50 hover:bg-ink-soft disabled:opacity-50"
             >
-              {busy ? "⋯" : "已廣播"}
+              {busy ? "⋯" : "選手已到"}
             </button>
           ) : null}
         </div>

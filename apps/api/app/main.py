@@ -22,6 +22,7 @@ def _migrate_sqlite() -> None:
             ("call_side", "VARCHAR(8)"),
             ("call_player_name", "TEXT"),
             ("call_created_at", "DATETIME"),
+            ("call_broadcasted_at", "DATETIME"),
         ],
     }
     with engine.begin() as conn:

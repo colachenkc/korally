@@ -31,6 +31,7 @@ export type TableItem = {
   call_side: CallSide | null;
   call_player_name: string | null;
   call_created_at: string | null;
+  call_broadcasted_at: string | null;
   created_at: string;
   updated_at: string;
   current_match: Match | null;

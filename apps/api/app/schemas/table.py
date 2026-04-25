@@ -38,10 +38,11 @@ class TableRead(TableBase):
     call_side: str | None = None
     call_player_name: str | None = None
     call_created_at: datetime | None = None
+    call_broadcasted_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
-    @field_serializer("call_created_at", when_used="json")
+    @field_serializer("call_created_at", "call_broadcasted_at", when_used="json")
     def _ser_call_dt(self, dt: datetime | None) -> str | None:
         return serialize_utc(dt)
 
