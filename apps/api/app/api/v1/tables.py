@@ -9,7 +9,7 @@ from app.models.match import Match
 from app.models.table import Table
 from app.models.tournament import Tournament
 from app.schemas.match import MatchFinish, MatchRead, MatchStart
-from app.schemas.table import TableCreate, TableRead, TableUpdate, TableWithCurrentMatch
+from app.schemas.table import TableCallCreate, TableCreate, TableRead, TableUpdate, TableWithCurrentMatch
 
 router = APIRouter(prefix="/tables", tags=["tables"])
 
@@ -140,6 +140,60 @@ def finish_match(table_id: int, payload: MatchFinish, db: Session = Depends(get_
 
     table.current_match_id = None
     table.status = "idle"
+    table.call_side = None
+    table.call_player_name = None
+    table.call_created_at = None
     db.commit()
     db.refresh(match)
     return match
+
+
+@router.post(
+    "/{table_id}/call",
+    response_model=TableWithCurrentMatch,
+    dependencies=[Depends(require_admin)],
+)
+def raise_call(table_id: int, payload: TableCallCreate, db: Session = Depends(get_db)) -> Table:
+    table = db.get(Table, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+    if not table.current_match_id:
+        raise HTTPException(status_code=400, detail="Table has no current match to call against")
+
+    match = db.get(Match, table.current_match_id)
+    if not match:
+        raise HTTPException(status_code=500, detail="Current match missing")
+
+    name_a = (match.player_a_name_manual or "").strip()
+    name_b = (match.player_b_name_manual or "").strip()
+    if payload.side == "A":
+        snapshot = name_a or "選手 A"
+    elif payload.side == "B":
+        snapshot = name_b or "選手 B"
+    else:
+        parts = [p for p in (name_a, name_b) if p]
+        snapshot = "、".join(parts) if parts else "兩位選手"
+
+    table.call_side = payload.side
+    table.call_player_name = snapshot
+    table.call_created_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(table)
+    return table
+
+
+@router.delete(
+    "/{table_id}/call",
+    response_model=TableWithCurrentMatch,
+    dependencies=[Depends(require_admin)],
+)
+def clear_call(table_id: int, db: Session = Depends(get_db)) -> Table:
+    table = db.get(Table, table_id)
+    if not table:
+        raise HTTPException(status_code=404, detail="Table not found")
+    table.call_side = None
+    table.call_player_name = None
+    table.call_created_at = None
+    db.commit()
+    db.refresh(table)
+    return table

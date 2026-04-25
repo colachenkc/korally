@@ -1,4 +1,6 @@
-from sqlalchemy import ForeignKey, String, Text
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -17,6 +19,11 @@ class Table(Base, TimestampMixin):
     current_match_id: Mapped[int | None] = mapped_column(ForeignKey("matches.id", ondelete="SET NULL"))
     current_referee_note: Mapped[str | None] = mapped_column(Text)
     referees_text: Mapped[str | None] = mapped_column(Text)
+
+    # Active "no-show / 唱名未到" call. NULL when no call active.
+    call_side: Mapped[str | None] = mapped_column(String(8))  # "A" | "B" | "BOTH"
+    call_player_name: Mapped[str | None] = mapped_column(Text)  # snapshot for broadcast
+    call_created_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     tournament: Mapped["Tournament"] = relationship(back_populates="tables")  # noqa: F821
     current_match: Mapped["Match | None"] = relationship(  # noqa: F821

@@ -18,6 +18,8 @@ export type Match = {
   remarks: string | null;
 };
 
+export type CallSide = "A" | "B" | "BOTH";
+
 export type TableItem = {
   id: number;
   tournament_id: number;
@@ -26,6 +28,9 @@ export type TableItem = {
   status: TableStatus;
   current_match_id: number | null;
   referees_text: string | null;
+  call_side: CallSide | null;
+  call_player_name: string | null;
+  call_created_at: string | null;
   created_at: string;
   updated_at: string;
   current_match: Match | null;

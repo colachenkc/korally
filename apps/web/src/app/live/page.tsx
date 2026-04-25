@@ -3,17 +3,28 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { apiGet } from "@/lib/api-client";
-import type { MainDesk, TableItem } from "@/types/models";
+import { useAuth } from "@/hooks/useAuth";
+import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
+import type { CallSide, MainDesk, TableItem } from "@/types/models";
 
 const REFRESH_MS = 5000;
+
+const SIDE_LABEL: Record<CallSide, string> = {
+  A: "A 方",
+  B: "B 方",
+  BOTH: "兩位",
+};
 
 export default function LivePage() {
   const [tables, setTables] = useState<TableItem[]>([]);
   const [mainDesks, setMainDesks] = useState<MainDesk[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [callTarget, setCallTarget] = useState<TableItem | null>(null);
+  const [busyTableId, setBusyTableId] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { status: authStatus } = useAuth();
+  const isAuthed = authStatus === "authenticated";
 
   const load = useCallback(async () => {
     try {
@@ -38,11 +49,38 @@ export default function LivePage() {
     };
   }, [load]);
 
+  async function submitCall(tableId: number, side: CallSide) {
+    setBusyTableId(tableId);
+    try {
+      await apiPost(`/tables/${tableId}/call`, { side });
+      setCallTarget(null);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "唱名失敗");
+    } finally {
+      setBusyTableId(null);
+    }
+  }
+
+  async function clearCall(tableId: number) {
+    setBusyTableId(tableId);
+    try {
+      await apiDelete(`/tables/${tableId}/call`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "清除唱名失敗");
+    } finally {
+      setBusyTableId(null);
+    }
+  }
+
   const summary = {
     total: tables.length,
     inProgress: tables.filter((t) => t.status === "in_progress").length,
     idle: tables.filter((t) => t.status === "idle").length,
   };
+
+  const calling = tables.filter((t) => t.call_side);
 
   return (
     <div className="space-y-6">
@@ -64,6 +102,15 @@ export default function LivePage() {
         <SummaryChip label="空閒" value={summary.idle} tone="cream" />
       </div>
 
+      {calling.length > 0 ? (
+        <CallBanner
+          tables={calling}
+          isAuthed={isAuthed}
+          busyTableId={busyTableId}
+          onClear={clearCall}
+        />
+      ) : null}
+
       {error ? (
         <div className="rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-3 text-sm text-accent-coral">
           {error}
@@ -80,7 +127,14 @@ export default function LivePage() {
             {[...tables]
               .sort((a, b) => a.id - b.id)
               .map((t) => (
-                <LiveTableCard key={t.id} table={t} />
+                <LiveTableCard
+                  key={t.id}
+                  table={t}
+                  isAuthed={isAuthed}
+                  busy={busyTableId === t.id}
+                  onCall={() => setCallTarget(t)}
+                  onClearCall={() => clearCall(t.id)}
+                />
               ))}
           </div>
         </div>
@@ -93,6 +147,68 @@ export default function LivePage() {
           ))}
         </div>
       ) : null}
+
+      {callTarget ? (
+        <CallModal
+          table={callTarget}
+          busy={busyTableId === callTarget.id}
+          onClose={() => setCallTarget(null)}
+          onSubmit={(side) => submitCall(callTarget.id, side)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CallBanner({
+  tables,
+  isAuthed,
+  busyTableId,
+  onClear,
+}: {
+  tables: TableItem[];
+  isAuthed: boolean;
+  busyTableId: number | null;
+  onClear: (id: number) => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-accent-coral/40 bg-accent-coral/10 p-4 shadow-card">
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-accent-coral">
+          請廣播 / Call players
+        </span>
+        <span className="font-mono text-xs text-accent-coral/80">{tables.length}</span>
+      </div>
+      <ul className="mt-3 space-y-2">
+        {tables.map((t) => (
+          <li
+            key={t.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/70 px-4 py-2.5"
+          >
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="font-mono text-base font-semibold text-ink">{t.table_no}</span>
+              <span className="text-sm text-ink-muted">
+                {t.call_side ? SIDE_LABEL[t.call_side] : ""} 唱名未到
+              </span>
+              <span className="text-base font-semibold text-ink">{t.call_player_name}</span>
+              {t.call_created_at ? (
+                <span className="font-mono text-xs text-ink-faint">
+                  <CallElapsed since={t.call_created_at} />
+                </span>
+              ) : null}
+            </div>
+            {isAuthed ? (
+              <button
+                onClick={() => onClear(t.id)}
+                disabled={busyTableId === t.id}
+                className="rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-ink-soft disabled:opacity-50"
+              >
+                {busyTableId === t.id ? "處理中⋯" : "已廣播"}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -150,20 +266,36 @@ function MainDeskCard({ desk }: { desk: MainDesk }) {
   );
 }
 
-function LiveTableCard({ table }: { table: TableItem }) {
+function LiveTableCard({
+  table,
+  isAuthed,
+  busy,
+  onCall,
+  onClearCall,
+}: {
+  table: TableItem;
+  isAuthed: boolean;
+  busy: boolean;
+  onCall: () => void;
+  onClearCall: () => void;
+}) {
   const match = table.current_match;
   const refs = table.referees_text?.trim();
+  const calling = !!table.call_side;
 
-  const accentBar =
-    table.status === "in_progress"
+  const accentBar = calling
+    ? "before:bg-accent-coral"
+    : table.status === "in_progress"
       ? "before:bg-accent-sky"
       : table.status === "delayed"
         ? "before:bg-accent-coral"
         : "before:bg-cream-200";
 
+  const cardBg = calling ? "bg-accent-coral/10" : "bg-white";
+
   return (
     <div
-      className={`relative flex min-h-[135px] flex-col overflow-hidden rounded-xl border border-cream-200 bg-white p-2.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 ${accentBar}`}
+      className={`relative flex min-h-[135px] flex-col overflow-hidden rounded-xl border border-cream-200 ${cardBg} p-2.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 ${accentBar}`}
     >
       <div className="flex items-start justify-between gap-1 border-b border-cream-200/70 pb-1.5">
         <div className="font-mono text-lg font-semibold leading-tight tracking-tight text-ink">
@@ -193,6 +325,34 @@ function LiveTableCard({ table }: { table: TableItem }) {
         <div className="mt-1.5 flex-1 text-xs text-ink-faint">目前無比賽</div>
       )}
 
+      {calling ? (
+        <div className="mt-1.5 rounded-lg border border-accent-coral/40 bg-white/70 px-2 py-1.5">
+          <div className="font-mono text-[10px] uppercase tracking-widest text-accent-coral">
+            唱名未到 · {table.call_side ? SIDE_LABEL[table.call_side] : ""}
+          </div>
+          <div className="truncate text-sm font-semibold text-ink">
+            {table.call_player_name}
+          </div>
+          {isAuthed ? (
+            <button
+              onClick={onClearCall}
+              disabled={busy}
+              className="mt-1.5 w-full rounded-md bg-ink px-2 py-1 text-xs font-medium text-cream-50 hover:bg-ink-soft disabled:opacity-50"
+            >
+              {busy ? "⋯" : "已廣播"}
+            </button>
+          ) : null}
+        </div>
+      ) : isAuthed && match ? (
+        <button
+          onClick={onCall}
+          disabled={busy}
+          className="mt-1.5 w-full rounded-md border border-accent-coral/40 bg-accent-coral/10 px-2 py-1 text-xs font-medium text-accent-coral hover:bg-accent-coral/20 disabled:opacity-50"
+        >
+          🔔 唱名未到
+        </button>
+      ) : null}
+
       {refs ? (
         <div className="mt-1.5 border-t border-cream-200/70 pt-1.5">
           <span className="mr-1.5 font-mono text-[10px] uppercase tracking-widest text-ink-muted">
@@ -202,6 +362,94 @@ function LiveTableCard({ table }: { table: TableItem }) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function CallModal({
+  table,
+  busy,
+  onClose,
+  onSubmit,
+}: {
+  table: TableItem;
+  busy: boolean;
+  onClose: () => void;
+  onSubmit: (side: CallSide) => void;
+}) {
+  const match = table.current_match;
+  const nameA = match?.player_a_name_manual?.trim() || "選手 A";
+  const nameB = match?.player_b_name_manual?.trim() || "選手 B";
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-muted">
+          {table.table_no} · 唱名未到
+        </div>
+        <div className="mt-1 text-base font-medium text-ink">請選擇未到的選手</div>
+
+        <div className="mt-4 space-y-2">
+          <CallChoiceButton
+            disabled={busy}
+            onClick={() => onSubmit("A")}
+            tag="A"
+            name={nameA}
+          />
+          <CallChoiceButton
+            disabled={busy}
+            onClick={() => onSubmit("B")}
+            tag="B"
+            name={nameB}
+          />
+          <CallChoiceButton
+            disabled={busy}
+            onClick={() => onSubmit("BOTH")}
+            tag="A+B"
+            name="兩位都未到"
+          />
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:text-ink"
+          >
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CallChoiceButton({
+  tag,
+  name,
+  onClick,
+  disabled,
+}: {
+  tag: string;
+  name: string;
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-cream-200 bg-cream-50 px-4 py-3 text-left transition hover:border-accent-coral/40 hover:bg-accent-coral/10 disabled:opacity-50"
+    >
+      <span className="font-mono text-xs uppercase tracking-widest text-ink-muted">{tag}</span>
+      <span className="flex-1 truncate text-sm font-medium text-ink">{name}</span>
+      <span className="text-xs text-accent-coral">唱名未到 →</span>
+    </button>
   );
 }
 
@@ -220,4 +468,17 @@ function Elapsed({ since }: { since: string }) {
       {mm}:{ss}
     </span>
   );
+}
+
+function CallElapsed({ since }: { since: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, []);
+  const start = new Date(since).getTime();
+  const diffSec = Math.max(0, Math.floor((now - start) / 1000));
+  if (diffSec < 60) return <span>剛剛</span>;
+  const mm = Math.floor(diffSec / 60);
+  return <span>{mm} 分前</span>;
 }

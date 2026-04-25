@@ -13,9 +13,29 @@ from app import models  # noqa: F401  ensure model classes are registered with B
 UPLOAD_ROOT = Path(settings.upload_root).resolve()
 
 
+def _migrate_sqlite() -> None:
+    """Lightweight inline migrations for SQLite. Adds new columns when missing."""
+    if not settings.database_url.startswith("sqlite"):
+        return
+    additions: dict[str, list[tuple[str, str]]] = {
+        "tables": [
+            ("call_side", "VARCHAR(8)"),
+            ("call_player_name", "TEXT"),
+            ("call_created_at", "DATETIME"),
+        ],
+    }
+    with engine.begin() as conn:
+        for table_name, cols in additions.items():
+            existing = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table_name})").fetchall()}
+            for col_name, col_type in cols:
+                if col_name not in existing:
+                    conn.exec_driver_sql(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _migrate_sqlite()
     UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
     yield
 
