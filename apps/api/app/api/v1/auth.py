@@ -47,7 +47,14 @@ def login(body: LoginBody, response: Response) -> AuthStatus:
 
 @router.post("/logout", response_model=AuthStatus)
 def logout(response: Response) -> AuthStatus:
-    response.delete_cookie(key=COOKIE_NAME, path="/")
+    # Cookie attributes must match set_cookie or browsers (especially cross-origin
+    # SameSite=None+Secure) silently reject the deletion.
+    response.delete_cookie(
+        key=COOKIE_NAME,
+        path="/",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+    )
     return AuthStatus(authenticated=False, role=None)
 
 
