@@ -3,23 +3,27 @@
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { authApi } from "@/lib/auth";
+import { authApi, type Role } from "@/lib/auth";
 
 export type AuthState = {
   status: "loading" | "authenticated" | "anonymous";
+  role: Role | null;
   refresh: () => Promise<void>;
 };
 
 export function useAuth(): AuthState {
   const pathname = usePathname();
   const [status, setStatus] = useState<AuthState["status"]>("loading");
+  const [role, setRole] = useState<Role | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       const res = await authApi.me();
       setStatus(res.authenticated ? "authenticated" : "anonymous");
+      setRole(res.role);
     } catch {
       setStatus("anonymous");
+      setRole(null);
     }
   }, []);
 
@@ -28,5 +32,5 @@ export function useAuth(): AuthState {
     void refresh();
   }, [refresh, pathname]);
 
-  return { status, refresh };
+  return { status, role, refresh };
 }

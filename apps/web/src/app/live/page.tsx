@@ -23,8 +23,9 @@ export default function LivePage() {
   const [callTarget, setCallTarget] = useState<TableItem | null>(null);
   const [busyTableId, setBusyTableId] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { status: authStatus } = useAuth();
+  const { status: authStatus, role } = useAuth();
   const isAuthed = authStatus === "authenticated";
+  const isAdmin = role === "admin";
 
   const load = useCallback(async () => {
     try {
@@ -117,7 +118,7 @@ export default function LivePage() {
       {pendingBroadcast.length > 0 ? (
         <CallBanner
           tables={pendingBroadcast}
-          isAuthed={isAuthed}
+          canBroadcast={isAdmin}
           busyTableId={busyTableId}
           onBroadcast={markBroadcasted}
         />
@@ -174,12 +175,12 @@ export default function LivePage() {
 
 function CallBanner({
   tables,
-  isAuthed,
+  canBroadcast,
   busyTableId,
   onBroadcast,
 }: {
   tables: TableItem[];
-  isAuthed: boolean;
+  canBroadcast: boolean;
   busyTableId: number | null;
   onBroadcast: (id: number) => void;
 }) {
@@ -209,7 +210,7 @@ function CallBanner({
                 </span>
               ) : null}
             </div>
-            {isAuthed ? (
+            {canBroadcast ? (
               <button
                 onClick={() => onBroadcast(t.id)}
                 disabled={busyTableId === t.id}

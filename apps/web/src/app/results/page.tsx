@@ -31,8 +31,8 @@ function formatShortTime(iso: string | null): string {
 }
 
 export default function ResultsPage() {
-  const { status: authStatus } = useAuth();
-  const canEdit = authStatus === "authenticated";
+  const { role } = useAuth();
+  const canEdit = role === "admin";
 
   const [matches, setMatches] = useState<Match[]>([]);
   const [active, setActive] = useState<string>(ALL);

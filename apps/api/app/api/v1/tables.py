@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.core.auth import require_admin
+from app.core.auth import require_admin, require_referee_or_admin
 from app.models.match import Match
 from app.models.table import Table
 from app.models.tournament import Tournament
@@ -152,7 +152,7 @@ def finish_match(table_id: int, payload: MatchFinish, db: Session = Depends(get_
 @router.post(
     "/{table_id}/call",
     response_model=TableWithCurrentMatch,
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_referee_or_admin)],
 )
 def raise_call(table_id: int, payload: TableCallCreate, db: Session = Depends(get_db)) -> Table:
     table = db.get(Table, table_id)
@@ -204,7 +204,7 @@ def mark_call_broadcasted(table_id: int, db: Session = Depends(get_db)) -> Table
 @router.delete(
     "/{table_id}/call",
     response_model=TableWithCurrentMatch,
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_referee_or_admin)],
 )
 def clear_call(table_id: int, db: Session = Depends(get_db)) -> Table:
     table = db.get(Table, table_id)
