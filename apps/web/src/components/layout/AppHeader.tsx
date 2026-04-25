@@ -6,8 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { authApi } from "@/lib/auth";
+import { authApi, type Role } from "@/lib/auth";
 import { SCHEDULE_CATEGORIES } from "@/types/models";
+
+const ROLE_LABEL: Record<Role, string> = { admin: "大會", referee: "裁判" };
 
 type NavChild = {
   href: string;
@@ -72,7 +74,7 @@ function isActive(pathname: string | null, href: string): boolean {
 export function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const { status, refresh } = useAuth();
+  const { status, role, refresh } = useAuth();
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -131,14 +133,17 @@ export function AppHeader() {
             </nav>
 
             {/* Desktop auth */}
-            <div className="hidden shrink-0 md:block">
+            <div className="hidden shrink-0 items-center gap-3 md:flex">
               {status === "loading" ? (
                 <span className="text-sm text-ink-faint">⋯</span>
               ) : status === "authenticated" ? (
-                <button onClick={handleLogout} className={AUTH_BUTTON_CLASS}>
-                  <GradientOverlay />
-                  <span className="relative">登出</span>
-                </button>
+                <>
+                  {role ? <RoleBadge role={role} /> : null}
+                  <button onClick={handleLogout} className={AUTH_BUTTON_CLASS}>
+                    <GradientOverlay />
+                    <span className="relative">登出</span>
+                  </button>
+                </>
               ) : pathname === "/login" ? null : (
                 <Link
                   href={`/login?redirect=${encodeURIComponent(pathname ?? "/admin")}`}
@@ -222,13 +227,20 @@ export function AppHeader() {
                 {status === "loading" ? (
                   <div className="py-3 text-center text-sm text-ink-faint">⋯</div>
                 ) : status === "authenticated" ? (
-                  <button
-                    onClick={handleLogout}
-                    className={`${AUTH_BUTTON_CLASS} block w-full text-center`}
-                  >
-                    <GradientOverlay />
-                    <span className="relative">登出</span>
-                  </button>
+                  <>
+                    {role ? (
+                      <div className="mb-3 flex justify-center">
+                        <RoleBadge role={role} />
+                      </div>
+                    ) : null}
+                    <button
+                      onClick={handleLogout}
+                      className={`${AUTH_BUTTON_CLASS} block w-full text-center`}
+                    >
+                      <GradientOverlay />
+                      <span className="relative">登出</span>
+                    </button>
+                  </>
                 ) : pathname === "/login" ? null : (
                   <Link
                     href={`/login?redirect=${encodeURIComponent(pathname ?? "/admin")}`}
@@ -356,6 +368,21 @@ function ChevronRight() {
     >
       <polyline points="4.5 3 7.5 6 4.5 9" />
     </svg>
+  );
+}
+
+function RoleBadge({ role }: { role: Role }) {
+  const tone =
+    role === "admin"
+      ? "bg-accent-butter/50 text-ink"
+      : "bg-cream-100 text-ink-soft";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tone}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+      {ROLE_LABEL[role]}
+    </span>
   );
 }
 
