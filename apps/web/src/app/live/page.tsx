@@ -9,12 +9,6 @@ import type { CallSide, MainDesk, TableItem } from "@/types/models";
 
 const REFRESH_MS = 5000;
 
-const SIDE_LABEL: Record<CallSide, string> = {
-  A: "A 方",
-  B: "B 方",
-  BOTH: "兩位",
-};
-
 export default function LivePage() {
   const [tables, setTables] = useState<TableItem[]>([]);
   const [mainDesks, setMainDesks] = useState<MainDesk[]>([]);
@@ -185,27 +179,25 @@ function CallBanner({
   onBroadcast: (id: number) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-accent-coral/40 bg-accent-coral/10 p-4 shadow-card">
+    <div className="rounded-xl border border-accent-coral/40 bg-accent-coral/10 p-2.5 shadow-card md:rounded-2xl md:p-4">
       <div className="flex items-center gap-2">
         <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-accent-coral">
           請廣播 / Call players
         </span>
         <span className="font-mono text-xs text-accent-coral/80">{tables.length}</span>
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-1.5 space-y-1.5 md:mt-3 md:space-y-2">
         {tables.map((t) => (
           <li
             key={t.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white/70 px-4 py-2.5"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/70 px-2.5 py-1.5 md:gap-3 md:rounded-xl md:px-4 md:py-2.5"
           >
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="font-mono text-base font-semibold text-ink">{t.table_no}</span>
-              <span className="text-sm text-ink-muted">
-                {t.call_side ? SIDE_LABEL[t.call_side] : ""} 唱名未到
-              </span>
-              <span className="text-base font-semibold text-ink">{t.call_player_name}</span>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 md:gap-x-3 md:gap-y-1">
+              <span className="font-mono text-sm font-semibold text-ink md:text-base">{t.table_no}</span>
+              <span className="text-xs text-ink-muted md:text-sm">唱名未到</span>
+              <span className="text-sm font-semibold text-ink md:text-base">{t.call_player_name}</span>
               {t.call_created_at ? (
-                <span className="font-mono text-xs text-ink-faint">
+                <span className="font-mono text-[11px] text-ink-faint md:text-xs">
                   <CallElapsed since={t.call_created_at} />
                 </span>
               ) : null}
@@ -318,7 +310,7 @@ function LiveTableCard({
       className={`relative flex min-h-[105px] flex-col overflow-hidden rounded-xl border border-cream-200 ${cardBg} p-2 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 md:min-h-[135px] md:p-2.5 ${accentBar}`}
     >
       <div className="flex items-start justify-between gap-1 border-b border-cream-200/70 pb-1 md:pb-1.5">
-        <div className="font-mono text-sm font-semibold leading-tight tracking-tight text-ink md:text-lg">
+        <div className="font-mono text-base font-semibold leading-tight tracking-tight text-ink md:text-lg">
           {table.table_no}
         </div>
         <StatusBadge status={table.status} />
@@ -327,22 +319,22 @@ function LiveTableCard({
       {match ? (
         <div className="mt-1 flex flex-1 flex-col gap-0.5 md:mt-1.5">
           {match.category_label ? (
-            <div className="text-xs font-bold text-ink md:text-base">{match.category_label}</div>
+            <div className="text-sm font-bold text-ink md:text-base">{match.category_label}</div>
           ) : null}
-          <div className="truncate text-[11px] font-medium text-ink-soft md:text-sm">
+          <div className="truncate text-sm font-medium text-ink-soft">
             {match.player_a_name_manual ?? "—"}
           </div>
-          <div className="truncate text-[11px] font-medium text-ink-soft md:text-sm">
+          <div className="truncate text-sm font-medium text-ink-soft">
             {match.player_b_name_manual ?? "—"}
           </div>
           {match.actual_start_time ? (
-            <div className="pt-0.5 font-mono text-[10px] text-ink-muted md:text-xs">
+            <div className="pt-0.5 font-mono text-[11px] text-ink-muted md:text-xs">
               <Elapsed since={match.actual_start_time} />
             </div>
           ) : null}
         </div>
       ) : (
-        <div className="mt-1 flex-1 text-[11px] text-ink-faint md:mt-1.5 md:text-xs">目前無比賽</div>
+        <div className="mt-1 flex-1 text-xs text-ink-faint md:mt-1.5">目前無比賽</div>
       )}
 
       {calling ? (
@@ -358,8 +350,7 @@ function LiveTableCard({
               table.call_broadcasted_at ? "text-ink-soft" : "text-accent-coral"
             }`}
           >
-            {table.call_broadcasted_at ? "已廣播 · 等選手到" : "唱名未到 · 待廣播"}
-            {table.call_side ? ` · ${SIDE_LABEL[table.call_side]}` : ""}
+            {table.call_broadcasted_at ? "已廣播" : "唱名未到"}
           </div>
           <div className="truncate text-sm font-semibold text-ink">
             {table.call_player_name}
