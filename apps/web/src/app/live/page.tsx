@@ -136,7 +136,7 @@ export default function LivePage() {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <div className="grid min-w-[1380px] auto-rows-fr grid-cols-7 gap-x-2 gap-y-3">
+          <div className="grid min-w-[980px] auto-rows-fr grid-cols-7 gap-x-1.5 gap-y-2 md:min-w-[1380px] md:gap-x-2 md:gap-y-3">
             {[...tables]
               .sort((a, b) => a.id - b.id)
               .map((t) => (
@@ -315,34 +315,34 @@ function LiveTableCard({
 
   return (
     <div
-      className={`relative flex min-h-[135px] flex-col overflow-hidden rounded-xl border border-cream-200 ${cardBg} p-2.5 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 ${accentBar}`}
+      className={`relative flex min-h-[105px] flex-col overflow-hidden rounded-xl border border-cream-200 ${cardBg} p-2 shadow-card before:absolute before:inset-y-0 before:left-0 before:w-1 md:min-h-[135px] md:p-2.5 ${accentBar}`}
     >
-      <div className="flex items-start justify-between gap-1 border-b border-cream-200/70 pb-1.5">
-        <div className="font-mono text-lg font-semibold leading-tight tracking-tight text-ink">
+      <div className="flex items-start justify-between gap-1 border-b border-cream-200/70 pb-1 md:pb-1.5">
+        <div className="font-mono text-sm font-semibold leading-tight tracking-tight text-ink md:text-lg">
           {table.table_no}
         </div>
         <StatusBadge status={table.status} />
       </div>
 
       {match ? (
-        <div className="mt-1.5 flex flex-1 flex-col gap-0.5">
+        <div className="mt-1 flex flex-1 flex-col gap-0.5 md:mt-1.5">
           {match.category_label ? (
-            <div className="text-base font-bold text-ink">{match.category_label}</div>
+            <div className="text-xs font-bold text-ink md:text-base">{match.category_label}</div>
           ) : null}
-          <div className="truncate text-sm font-medium text-ink-soft">
+          <div className="truncate text-[11px] font-medium text-ink-soft md:text-sm">
             {match.player_a_name_manual ?? "—"}
           </div>
-          <div className="truncate text-sm font-medium text-ink-soft">
+          <div className="truncate text-[11px] font-medium text-ink-soft md:text-sm">
             {match.player_b_name_manual ?? "—"}
           </div>
           {match.actual_start_time ? (
-            <div className="pt-0.5 font-mono text-xs text-ink-muted">
+            <div className="pt-0.5 font-mono text-[10px] text-ink-muted md:text-xs">
               <Elapsed since={match.actual_start_time} />
             </div>
           ) : null}
         </div>
       ) : (
-        <div className="mt-1.5 flex-1 text-xs text-ink-faint">目前無比賽</div>
+        <div className="mt-1 flex-1 text-[11px] text-ink-faint md:mt-1.5 md:text-xs">目前無比賽</div>
       )}
 
       {calling ? (
@@ -385,11 +385,11 @@ function LiveTableCard({
       ) : null}
 
       {refs ? (
-        <div className="mt-1.5 border-t border-cream-200/70 pt-1.5">
-          <span className="mr-1.5 font-mono text-[10px] uppercase tracking-widest text-ink-muted">
+        <div className="mt-1 border-t border-cream-200/70 pt-1 md:mt-1.5 md:pt-1.5">
+          <span className="mr-1 font-mono text-[9px] uppercase tracking-widest text-ink-muted md:mr-1.5 md:text-[10px]">
             裁判
           </span>
-          <span className="whitespace-pre-wrap text-base font-semibold text-ink">{refs}</span>
+          <span className="whitespace-pre-wrap text-xs font-semibold text-ink md:text-base">{refs}</span>
         </div>
       ) : null}
     </div>
