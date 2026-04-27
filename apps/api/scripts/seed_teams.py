@@ -100,38 +100,111 @@ def _request(opener, method: str, url: str, body: dict | None = None) -> tuple[i
 
 # ---- Participants ---------------------------------------------------------
 
-# (department, name)
-SINGLES_MEN: list[tuple[str, str]] = [
-    ("社工一", "蔡卓凌"), ("外文三", "連彥儒"), ("國企碩一", "陳奕凱"), ("資工二", "鄭宇宏"),
-    ("土木一", "林柏安"), ("醫學六", "賴昱翔"), ("食品科技", "林建宏"), ("生科二", "張學丰"),
-    ("社會四", "潘楷文"), ("化工五", "竇方遠"), ("資工二", "趙崧瑜"), ("資工三", "邵愷信"),
-    ("醫學二", "柯奕廷"), ("台大醫院骨科部住院醫師", "蘇致騏"), ("兼任助理教授", "王有德"),
-    ("網媒三", "古庭榮"), ("數學碩一", "郭庭榞"), ("化工二", "陳學彥"),
-    ("台大醫院泌尿部主治醫師", "董牧喬"), ("化工二", "廖又謙"), ("法律一", "王惇楷"),
-    ("化工四", "李翊宇"), ("電機一", "梁勝宥"), ("機械碩一", "江宇峻"), ("數學四", "黃勤元"),
-    ("資工一", "邱沐安"), ("電機三", "吳展宇"), ("網媒二", "李沅錡"), ("工管一", "藍立辰"),
-    ("資工三", "彭詳睿"), ("財法二", "陳先昱"), ("機械三", "朱宇謙"), ("數學系", "林朝明"),
-    ("元件材料博三", "古沅翰"), ("微生物博班", "林承學"), ("資工一", "劉宥澤"),
-    ("職治二", "陸育安"), ("工管二", "陳宏亮"), ("材料碩一", "朱宸緯"), ("工海一", "劉軒綸"),
-    ("土木一", "侯易宏"), ("機械碩一", "林雨霆"), ("財金一", "張辰安"), ("資管一", "張智林"),
-    ("電機二", "劉宣徹"), ("醫學二", "陳彥臻"), ("機械二", "徐晨翰"), ("工海一", "郭虹宇"),
-    ("化工四", "翟昱維"), ("資工二", "陳柏凱"), ("化學一", "李冠甫"), ("牙醫二", "林育臣"),
-    ("地理四", "曾羿豪"), ("地質三", "黃慶智"), ("資工碩三", "周柏宇"), ("醫學五", "陳奕成"),
-    ("會計四", "陳禹桓"), ("工管科組二", "楊翔宇"), ("數學五", "莊鎰華"), ("公衛三", "賴禾凱"),
-    ("經濟二", "李柏俊"), ("藥理碩一", "高君宏"), ("國發碩專六", "黃燦堂"), ("機械四", "鍾尚恩"),
-    ("資工一", "蕭子堯"), ("心理三", "吳勝億"), ("資工二", "王開育"), ("藥學六", "高睿辰"),
-    ("會計二", "游承翰"), ("環職碩一", "王柏穎"), ("電子碩三", "李為勳"), ("資工三", "陳柏宇"),
-    ("EMBA112B", "陳俊昇"), ("流預碩二", "謝昇諺"), ("會計一", "黃崇勝"), ("化工四", "林進階"),
-    ("機械一", "方證嘉"), ("電子碩一", "曾柏穎"), ("經濟二", "張宸菘"), ("電子碩一", "林岳勳"),
-    ("經濟二", "王伯睿"), ("電子所", "潘正諺"), ("語文中心一", "汪安龙"),
+# (department, name, student_id) — student_id all-uppercase or None.
+SINGLES_MEN: list[tuple[str, str, str | None]] = [
+    ("社工一", "蔡卓凌", "B14310047"),
+    ("外文三", "連彥儒", "B12102123"),
+    ("國企碩一", "陳奕凱", "R14724034"),
+    ("資工二", "鄭宇宏", "B13902103"),
+    ("土木一", "林柏安", "B14501025"),
+    ("醫學六", "賴昱翔", "B09401077"),
+    ("食品科技", "林建宏", "R13641038"),
+    ("生科二", "張學丰", "B13B01033"),
+    ("社會四", "潘楷文", "B11305003"),
+    ("化工五", "竇方遠", "B10504074"),
+    ("資工二", "趙崧瑜", "B13902039"),
+    ("資工三", "邵愷信", "B12902117"),
+    ("醫學二", "柯奕廷", "B13401008"),
+    ("台大醫院骨科部住院醫師", "蘇致騏", "B05401015"),
+    ("兼任助理教授", "王有德", "28390"),
+    ("網媒三", "古庭榮", "R12944048"),
+    ("數學碩一", "郭庭榞", "R14221015"),
+    ("化工二", "陳學彥", "B13504032"),
+    ("台大醫院泌尿部主治醫師", "董牧喬", "員工編號128497"),
+    ("化工二", "廖又謙", "B13504034"),
+    ("法律一", "王惇楷", "B14A01135"),
+    ("化工四", "李翊宇", "B11504061"),
+    ("電機一", "梁勝宥", "B14901048"),
+    ("機械碩一", "江宇峻", "R14522113"),
+    ("數學四", "黃勤元", "B11201009"),
+    ("資工一", "邱沐安", "B14902031"),
+    ("電機三", "吳展宇", "B12502134"),
+    ("網媒二", "李沅錡", "R13944007"),
+    ("工管一", "藍立辰", "B14701109"),
+    ("資工三", "彭詳睿", "B12902054"),
+    ("財法二", "陳先昱", "B13A01356"),
+    ("機械三", "朱宇謙", "B12502096"),
+    ("數學系", "林朝明", "28173"),
+    ("元件材料博三", "古沅翰", "F11K43015"),
+    ("微生物博班", "林承學", "D09445001"),
+    ("資工一", "劉宥澤", "B14902004"),
+    ("職治二", "陸育安", "B13409040"),
+    ("工管二", "陳宏亮", "B13701106"),
+    ("材料碩一", "朱宸緯", "R14527001"),
+    ("工海一", "劉軒綸", "B14505004"),
+    ("土木一", "侯易宏", "B14501006"),
+    ("機械碩一", "林雨霆", "R14522721"),
+    ("財金一", "張辰安", "B14703022"),
+    ("資管一", "張智林", "B14705050"),
+    ("電機二", "劉宣徹", "B12505051"),
+    ("醫學二", "陳彥臻", "B13401016"),
+    ("機械二", "徐晨翰", "B13502027"),
+    ("工海一", "郭虹宇", "B14505025"),
+    ("化工四", "翟昱維", "B10504123"),
+    ("資工二", "陳柏凱", "B13902106"),
+    ("化學一", "李冠甫", "B14203022"),
+    ("牙醫二", "林育臣", "B13402004"),
+    ("地理四", "曾羿豪", "B11208038"),
+    ("地質三", "黃慶智", "B12204007"),
+    ("資工碩三", "周柏宇", "R12922222"),
+    ("醫學五", "陳奕成", "B10401124"),
+    ("會計四", "陳禹桓", "B11702045"),
+    ("工管科組二", "楊翔宇", "B13701242"),
+    ("數學五", "莊鎰華", "B10201029"),
+    ("公衛三", "賴禾凱", "B12801022"),
+    ("經濟二", "李柏俊", "B13303012"),
+    ("藥理碩一", "高君宏", "R14443015"),
+    ("國發碩專六", "黃燦堂", "P08341023"),
+    ("機械四", "鍾尚恩", None),
+    ("資工一", "蕭子堯", "B14902063"),
+    ("心理三", "吳勝億", "B12207038"),
+    ("資工二", "王開育", "B13902152"),
+    ("藥學六", "高睿辰", "B09403006"),
+    ("會計二", "游承翰", "B13702104"),
+    ("環職碩一", "王柏穎", None),
+    ("電子碩三", "李為勳", "R12943036"),
+    ("資工三", "陳柏宇", "B12902131"),
+    ("EMBA112B", "陳俊昇", "P12745022"),
+    ("流預碩二", "謝昇諺", "R13849017"),
+    ("會計一", "黃崇勝", "B14702047"),
+    ("化工四", "林進階", "B11504102"),
+    ("機械一", "方證嘉", "B14502019"),
+    ("電子碩一", "曾柏穎", "R14943079"),
+    ("經濟二", "張宸菘", "B13605014"),
+    ("電子碩一", "林岳勳", "R14943166"),
+    ("經濟二", "王伯睿", "B13303072"),
+    ("電子所", "潘正諺", "R12943154"),
+    ("語文中心一", "汪安龙", "L14S21150"),
 ]
 
-SINGLES_WOMEN: list[tuple[str, str]] = [
-    ("心理一", "劉瀚云"), ("生工二", "林子庭"), ("工管一", "許依琳"), ("生科碩一", "陳育潔"),
-    ("電機二", "呂依倢"), ("重科碩二", "蘇絹淇"), ("生科博三", "許舒媛"), ("工管一", "巫奕臻"),
-    ("生傳一", "馬玉安"), ("地質一", "張恩榕"), ("經濟碩一", "洪詩涵"), ("心理一", "黃亮熏"),
-    ("社工四", "曾子庭"), ("法律三", "蔡函紜"), ("化工四", "粘蕎"), ("藥學六", "劉京涵"),
-    ("財金三", "王如馨"),
+SINGLES_WOMEN: list[tuple[str | None, str, str | None]] = [
+    ("心理一", "劉瀚云", "B14207075"),
+    ("生工二", "林子庭", "B13602042"),
+    ("工管一", "許依琳", "B14701101"),
+    ("生科碩一", "陳育潔", "R14B21042"),
+    ("電機二", "呂依倢", "B13901151"),
+    ("重科碩二", "蘇絹淇", "R13K41018"),
+    ("生科博三", "許舒媛", "D11B46015"),
+    ("工管一", "巫奕臻", None),
+    ("生傳一", "馬玉安", None),
+    ("地質一", "張恩榕", None),
+    ("經濟碩一", "洪詩涵", "R13323037"),
+    ("心理一", "黃亮熏", "B14207070"),
+    ("社工四", "曾子庭", "B11310003"),
+    ("法律三", "蔡函紜", "B12A01309"),
+    ("化工四", "粘蕎", "B11603052"),
+    ("藥學六", "劉京涵", "B09403021"),
+    ("財金三", "王如馨", "B12703001"),
 ]
 
 # (name_a, name_b) — each pair becomes 2 Participant rows sharing the same pair_no.
@@ -190,37 +263,71 @@ def seed_participants(opener, api_base: str) -> None:
     status, existing = _request(opener, "GET", f"{api_base}/api/v1/participants")
     if status != 200 or not isinstance(existing, list):
         sys.exit(f"List participants failed: HTTP {status}")
-    # Skip-key: (category, name, pair_no) — pair_no may legitimately differ between same-named entries.
-    existing_keys: set[tuple[str, str, int | None]] = {
-        (p["category"], p["name"], p.get("pair_no")) for p in existing
+    # Index by (category, name, pair_no) for upsert lookups.
+    existing_by_key: dict[tuple[str, str, int | None], dict] = {
+        (p["category"], p["name"], p.get("pair_no")): p for p in existing
     }
 
-    counts = {"created": 0, "skipped": 0, "failed": 0}
+    counts = {"created": 0, "updated": 0, "skipped": 0, "failed": 0}
 
-    def post_one(payload: dict) -> None:
+    def upsert(payload: dict) -> None:
         key = (payload["category"], payload["name"], payload.get("pair_no"))
-        if key in existing_keys:
-            counts["skipped"] += 1
+        if key in existing_by_key:
+            current = existing_by_key[key]
+            # Only PATCH fields where new value is non-None and differs (don't clear with None).
+            diff: dict = {}
+            for f in ("team", "student_id", "seed", "pair_no"):
+                new_v = payload.get(f)
+                if new_v is not None and current.get(f) != new_v:
+                    diff[f] = new_v
+            if not diff:
+                counts["skipped"] += 1
+                return
+            status, body = _request(
+                opener, "PATCH", f"{api_base}/api/v1/participants/{current['id']}", diff
+            )
+            if status in (200, 201):
+                counts["updated"] += 1
+                existing_by_key[key] = body  # refresh
+            else:
+                counts["failed"] += 1
+                print(f"  ! {payload['name']} (PATCH): HTTP {status} {body}")
             return
+        # Create new
         status, body = _request(opener, "POST", f"{api_base}/api/v1/participants", payload)
         if status in (200, 201):
             counts["created"] += 1
-            existing_keys.add(key)
+            existing_by_key[key] = body
         else:
             counts["failed"] += 1
-            print(f"  ! {payload['name']}: HTTP {status} {body}")
+            print(f"  ! {payload['name']} (POST): HTTP {status} {body}")
 
-    for seed_no, (team, name) in enumerate(SINGLES_MEN, start=1):
-        post_one({"category": "men_singles", "name": name, "team": team, "seed": seed_no})
+    for seed_no, (team, name, sid) in enumerate(SINGLES_MEN, start=1):
+        upsert({
+            "category": "men_singles",
+            "name": name,
+            "team": team,
+            "student_id": sid.upper() if sid else None,
+            "seed": seed_no,
+        })
 
-    for seed_no, (team, name) in enumerate(SINGLES_WOMEN, start=1):
-        post_one({"category": "women_singles", "name": name, "team": team, "seed": seed_no})
+    for seed_no, (team, name, sid) in enumerate(SINGLES_WOMEN, start=1):
+        upsert({
+            "category": "women_singles",
+            "name": name,
+            "team": team,
+            "student_id": sid.upper() if sid else None,
+            "seed": seed_no,
+        })
 
     for pair_no, (name_a, name_b) in enumerate(DOUBLES, start=1):
         for nm in (name_a, name_b):
-            post_one({"category": "doubles", "name": nm, "pair_no": pair_no})
+            upsert({"category": "doubles", "name": nm, "pair_no": pair_no})
 
-    print(f"[participants] created={counts['created']} skipped={counts['skipped']} failed={counts['failed']}")
+    print(
+        f"[participants] created={counts['created']} updated={counts['updated']} "
+        f"skipped={counts['skipped']} failed={counts['failed']}"
+    )
 
 
 def main() -> None:
