@@ -1,0 +1,140 @@
+"""Seed team rosters via the API (no DB access needed; runs locally against any env).
+
+Usage (from apps/api directory):
+
+    API_BASE=https://match-monitor-api.fly.dev \
+    ADMIN_PASSWORD='your-admin-password' \
+    python scripts/seed_teams.py
+
+Idempotent: skips teams already present (matched by division + name).
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from http.cookiejar import CookieJar
+
+
+# ---- DATA ----------------------------------------------------------------
+
+# (team_name, department, members)
+MEN_TEAMS: list[tuple[str, str, list[str]]] = [
+    ("教職聯隊", "教職", ["張淑文", "林能裕", "陳姿婷", "江茂雄", "葉德銘", "林郁政", "郭金森", "羅大偉", "黃建澎"]),
+    ("寶山走走", "臺大醫院", ["蘇致騏", "董牧喬", "謝向傑", "陳逸涵", "周書緯", "湯升墉", "吳定衡"]),
+    ("欣梅爾不會這樣打", "社會+社工", ["潘楷文", "郭秉叡", "鍾昀庭", "曾子庭", "郭柏元", "蔡卓凌", "陳佑瑋", "李佑晴"]),
+    ("我愛化學系系桌", "化學", ["劉品佑", "楊恆昱", "張予臣", "廖家翔", "黃家樑", "廖家立", "陳柏安", "李冠甫"]),
+    ("B化特多", "化工", ["陳學彥", "葉哲維", "邱益山", "薛亦翰", "黃士庭", "盧柏融", "翟昱維"]),
+    ("羅慶宸科技新貴", "化工+大氣", ["廖又謙", "王俊文", "竇方遠", "李翊宇", "李柏諺", "王秉豐", "羅慶宸", "許晉瑋"]),
+    ("新。稻中桌球社", "教職+微生物", ["林承學", "鐘桂彬", "廖敏村", "王怡凡", "張品芷", "陳咨方", "曾冠錡", "廖先啟", "鄭憲鵬", "施錦棠", "李昀真"]),
+    ("飛蚊戰隊3.0", "材料+元件材料", ["古沅翰", "謝沛岑", "顏毅翔", "黃威綸", "陳毅嘉", "張芷芸", "葉子鉉", "許祐齊", "呂昶佑"]),
+    ("歡樂團體二代", "物理+環工", ["林語浩", "吳楷銘", "李羿圻", "詹易澄", "陳鈞睿", "梁濬哲", "簡琮晉"]),
+    ("和氣生財", "財金+物理", ["彭育祥", "王如馨", "陳嘉均", "葉至宸", "張學丰", "陳威儒", "李若水"]),
+    ("這次一定進決賽", "材料+生工", ["林士堯", "金詩翔", "王翊瑄", "蘇呈丰", "宋以恆", "陳柏澄", "洪楷恩", "劉晏維", "張詠青"]),
+    ("柯奕廷只可以贏", "醫學+生機", ["陳奕成", "賴昱翔", "柯奕廷", "莊予睿", "陳彥臻", "林奕丞", "陳翊華", "劉冠熙", "蕭梓宏", "黃律勳", "沈佑謙", "陳伯恩"]),
+    ("法式可頌", "法律+奈米", ["周芊妤", "鄭塏平", "陳柏豪", "陳先昱", "羅友昀", "陳睿恩", "呂學昂"]),
+    ("悠悠哉哉法律人", "法律", ["周宓", "王敦愷", "王柏諺", "劉俊緯", "黃則鈞", "林韶均", "姜蕎", "侯聖新"]),
+    ("主唱太乒命了", "資工", ["陳柏凱", "鄭宇宏", "方軒岷", "何浩莛", "邵愷信", "陳柏宇", "邱沐安", "呂昊宸"]),
+    ("陳柏霖學長歡送派對", "資工+獸醫", ["陳柏霖", "劉宥澤", "陳愷新", "鄭乙芳", "楊文政", "周柏宇", "古庭榮", "李沅錡", "林守德"]),
+    ("外心人入侵地球", "心理+外文", ["吳勝億", "羅垣鈞", "施博元", "辛永浩", "連彥儒", "曾梓恩", "陳東閱"]),
+    ("從此生活有了盼頭", "經濟", ["王伯睿", "邱繼磊", "李柏俊", "張宸崧", "董祐寧", "汪宏叡", "林延里", "陳佑宸"]),
+    ("羅慶祐科技新貴", "電機+機械", ["陳世庭", "李為勳", "曾柏穎", "陳陞", "謝博仲", "吳展宇", "方證嘉", "羅慶祐"]),
+    ("羅慶柚香綠茶", "電機+機械", ["徐晨翰", "王梓安", "林冠安", "李家陞", "溫柏銓", "劉宣徹", "胡哲瀚", "蔡家瑜"]),
+    ("我要把天賦帶去紅土球場", "電機+機械", ["陳宥禎", "陳慕義", "黃楷豫", "林家禾", "梁勝宥", "邵睿庠", "江宇峻"]),
+    ("隊名集思廣益一下", "工管+資管", ["楊翔宇", "張智林", "黃泓諭", "巫奕臻", "陳宏亮", "藍立辰", "許依琳"]),
+    ("所有選手", "數學", ["吳冠霆", "林朝明", "郭庭榞", "莊鎰華", "黃勤元", "許弘毅", "鐘棋閎"]),
+    ("賴祥德AAOA", "動科+電機", ["房倢妤", "鄭喬至", "呂宛庭", "曾千軒", "王致堯", "葉貽謀", "陳彥傑", "魏宣丞"]),
+    ("無敵67機械暴龍", "會計+工海", ["黃崇勝", "郭虹宇", "游承翰", "何啟鋼", "王柏森", "蔡佳諴", "陳禹桓"]),
+    ("你有啥想法", "土木+牙醫", ["賴印霆", "邱紀凱", "侯易宏", "林柏安", "林育臣", "蔡孟勳", "吳睿瑜", "陳思辰", "蔡鎮宇"]),
+    ("宇宙艦隊加達達", "機械+財金", ["鍾尚恩", "黃國豪", "曾仕達", "李彥霆", "郭家彣", "柯奕安", "朱宇謙", "鄭家昀"]),
+    ("公衛系桌", "公衛+職治", ["賴禾凱", "王柏穎", "王宏恩", "柯元敦", "謝昇諺", "劉承羲", "陸育安", "黃泓嘉", "張鈞奕"]),
+]
+
+WOMEN_TEAMS: list[tuple[str, str, list[str]]] = []
+
+
+# ---- HTTP helpers --------------------------------------------------------
+
+
+def _build_opener() -> urllib.request.OpenerDirector:
+    return urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(CookieJar()),
+    )
+
+
+def _request(opener, method: str, url: str, body: dict | None = None) -> tuple[int, dict | None]:
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    headers = {"Content-Type": "application/json"} if body is not None else {}
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    try:
+        with opener.open(req) as resp:
+            payload = resp.read()
+            return resp.status, (json.loads(payload) if payload else None)
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode("utf-8", errors="replace")
+        try:
+            parsed = json.loads(body_text)
+        except json.JSONDecodeError:
+            parsed = {"detail": body_text}
+        return e.code, parsed
+
+
+# ---- Seeding -------------------------------------------------------------
+
+
+def seed(division: str, teams: list[tuple[str, str, list[str]]]) -> None:
+    api_base = os.environ.get("API_BASE", "http://localhost:8000").rstrip("/")
+    password = os.environ.get("ADMIN_PASSWORD")
+    if not password:
+        sys.exit("Missing ADMIN_PASSWORD env var")
+
+    opener = _build_opener()
+
+    # 1. login
+    status, _ = _request(opener, "POST", f"{api_base}/api/v1/auth/login", {"password": password})
+    if status != 200:
+        sys.exit(f"Login failed: HTTP {status}")
+
+    # 2. fetch existing teams to build a (division, name) skip-set
+    status, existing = _request(opener, "GET", f"{api_base}/api/v1/teams")
+    if status != 200 or not isinstance(existing, list):
+        sys.exit(f"List teams failed: HTTP {status}")
+    existing_keys: set[tuple[str, str]] = {(t["division"], t["name"]) for t in existing}
+
+    # 3. create missing teams
+    created = 0
+    skipped = 0
+    failed = 0
+    for order, (name, dept, members) in enumerate(teams):
+        if (division, name) in existing_keys:
+            skipped += 1
+            continue
+        members_text = "\n".join(m.strip() for m in members if m and m.strip())
+        payload = {
+            "division": division,
+            "name": name,
+            "department": dept,
+            "members_text": members_text,
+            "display_order": order,
+        }
+        status, body = _request(opener, "POST", f"{api_base}/api/v1/teams", payload)
+        if status in (200, 201):
+            created += 1
+        else:
+            failed += 1
+            print(f"  ! {name}: HTTP {status} {body}")
+
+    print(f"[{division}] created={created} skipped={skipped} failed={failed}")
+
+
+def main() -> None:
+    if MEN_TEAMS:
+        seed("men", MEN_TEAMS)
+    if WOMEN_TEAMS:
+        seed("women", WOMEN_TEAMS)
+
+
+if __name__ == "__main__":
+    main()
