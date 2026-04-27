@@ -1,4 +1,4 @@
-"""Seed team rosters via the API (no DB access needed; runs locally against any env).
+"""Seed team rosters AND singles/doubles participant lists via the API.
 
 Usage (from apps/api directory):
 
@@ -6,7 +6,8 @@ Usage (from apps/api directory):
     ADMIN_PASSWORD='your-admin-password' \
     python scripts/seed_teams.py
 
-Idempotent: skips teams already present (matched by division + name).
+Idempotent: skips teams already present (matched by division + name) and
+skips participants already present (matched by category + name + pair_no).
 """
 from __future__ import annotations
 
@@ -97,29 +98,72 @@ def _request(opener, method: str, url: str, body: dict | None = None) -> tuple[i
 # ---- Seeding -------------------------------------------------------------
 
 
-def seed(division: str, teams: list[tuple[str, str, list[str]]]) -> None:
-    api_base = os.environ.get("API_BASE", "http://localhost:8000").rstrip("/")
-    password = os.environ.get("ADMIN_PASSWORD")
-    if not password:
-        sys.exit("Missing ADMIN_PASSWORD env var")
+# ---- Participants ---------------------------------------------------------
 
+# (department, name)
+SINGLES_MEN: list[tuple[str, str]] = [
+    ("社工一", "蔡卓凌"), ("外文三", "連彥儒"), ("國企碩一", "陳奕凱"), ("資工二", "鄭宇宏"),
+    ("土木一", "林柏安"), ("醫學六", "賴昱翔"), ("食品科技", "林建宏"), ("生科二", "張學丰"),
+    ("社會四", "潘楷文"), ("化工五", "竇方遠"), ("資工二", "趙崧瑜"), ("資工三", "邵愷信"),
+    ("醫學二", "柯奕廷"), ("台大醫院骨科部住院醫師", "蘇致騏"), ("兼任助理教授", "王有德"),
+    ("網媒三", "古庭榮"), ("數學碩一", "郭庭榞"), ("化工二", "陳學彥"),
+    ("台大醫院泌尿部主治醫師", "董牧喬"), ("化工二", "廖又謙"), ("法律一", "王惇楷"),
+    ("化工四", "李翊宇"), ("電機一", "梁勝宥"), ("機械碩一", "江宇峻"), ("數學四", "黃勤元"),
+    ("資工一", "邱沐安"), ("電機三", "吳展宇"), ("網媒二", "李沅錡"), ("工管一", "藍立辰"),
+    ("資工三", "彭詳睿"), ("財法二", "陳先昱"), ("機械三", "朱宇謙"), ("數學系", "林朝明"),
+    ("元件材料博三", "古沅翰"), ("微生物博班", "林承學"), ("資工一", "劉宥澤"),
+    ("職治二", "陸育安"), ("工管二", "陳宏亮"), ("材料碩一", "朱宸緯"), ("工海一", "劉軒綸"),
+    ("土木一", "侯易宏"), ("機械碩一", "林雨霆"), ("財金一", "張辰安"), ("資管一", "張智林"),
+    ("電機二", "劉宣徹"), ("醫學二", "陳彥臻"), ("機械二", "徐晨翰"), ("工海一", "郭虹宇"),
+    ("化工四", "翟昱維"), ("資工二", "陳柏凱"), ("化學一", "李冠甫"), ("牙醫二", "林育臣"),
+    ("地理四", "曾羿豪"), ("地質三", "黃慶智"), ("資工碩三", "周柏宇"), ("醫學五", "陳奕成"),
+    ("會計四", "陳禹桓"), ("工管科組二", "楊翔宇"), ("數學五", "莊鎰華"), ("公衛三", "賴禾凱"),
+    ("經濟二", "李柏俊"), ("藥理碩一", "高君宏"), ("國發碩專六", "黃燦堂"), ("機械四", "鍾尚恩"),
+    ("資工一", "蕭子堯"), ("心理三", "吳勝億"), ("資工二", "王開育"), ("藥學六", "高睿辰"),
+    ("會計二", "游承翰"), ("環職碩一", "王柏穎"), ("電子碩三", "李為勳"), ("資工三", "陳柏宇"),
+    ("EMBA112B", "陳俊昇"), ("流預碩二", "謝昇諺"), ("會計一", "黃崇勝"), ("化工四", "林進階"),
+    ("機械一", "方證嘉"), ("電子碩一", "曾柏穎"), ("經濟二", "張宸菘"), ("電子碩一", "林岳勳"),
+    ("經濟二", "王伯睿"), ("電子所", "潘正諺"), ("語文中心一", "汪安龙"),
+]
+
+SINGLES_WOMEN: list[tuple[str, str]] = [
+    ("心理一", "劉瀚云"), ("生工二", "林子庭"), ("工管一", "許依琳"), ("生科碩一", "陳育潔"),
+    ("電機二", "呂依倢"), ("重科碩二", "蘇絹淇"), ("生科博三", "許舒媛"), ("工管一", "巫奕臻"),
+    ("生傳一", "馬玉安"), ("地質一", "張恩榕"), ("經濟碩一", "洪詩涵"), ("心理一", "黃亮熏"),
+    ("社工四", "曾子庭"), ("法律三", "蔡函紜"), ("化工四", "粘蕎"), ("藥學六", "劉京涵"),
+    ("財金三", "王如馨"),
+]
+
+# (name_a, name_b) — each pair becomes 2 Participant rows sharing the same pair_no.
+DOUBLES: list[tuple[str, str]] = [
+    ("潘姿穎", "蘇品樺"), ("王常馨", "梁佳羚"), ("翁林立", "黃宇安"), ("謝沛岑", "蔡家瑜"),
+    ("羅友昀", "賴印霆"), ("江茂雄", "葉德銘"), ("林能裕", "羅大偉"), ("張淑文", "陳姿婷"),
+    ("張沄芳", "陳柏霖"), ("楊恆昱", "黃家樑"), ("楊宏儀", "曾亭瑄"), ("彭育祥", "陳勁宇"),
+    ("林家禾", "胡峻瑋"), ("洪敏翔", "陳翊馨"), ("王秉豐", "王俊文"), ("羅慶宸", "羅慶祐"),
+    ("沈姿雨", "張詠青"), ("陳宥禎", "張久致"), ("房倢妤", "鄭喬至"), ("廖翊丞", "張博榮"),
+    ("李昀真", "張品芷"), ("許祐瑄", "柯奕安"), ("方軒岷", "呂昊宸"), ("黃國豪", "林以凡"),
+    ("陳慕義", "黃楷豫"),
+]
+
+
+# ---- Seeding -------------------------------------------------------------
+
+
+def _login(api_base: str, password: str) -> urllib.request.OpenerDirector:
     opener = _build_opener()
-
-    # 1. login
     status, _ = _request(opener, "POST", f"{api_base}/api/v1/auth/login", {"password": password})
     if status != 200:
         sys.exit(f"Login failed: HTTP {status}")
+    return opener
 
-    # 2. fetch existing teams to build a (division, name) skip-set
+
+def seed_teams(opener, api_base: str, division: str, teams: list[tuple[str, str, list[str]]]) -> None:
     status, existing = _request(opener, "GET", f"{api_base}/api/v1/teams")
     if status != 200 or not isinstance(existing, list):
         sys.exit(f"List teams failed: HTTP {status}")
     existing_keys: set[tuple[str, str]] = {(t["division"], t["name"]) for t in existing}
 
-    # 3. create missing teams
-    created = 0
-    skipped = 0
-    failed = 0
+    created = skipped = failed = 0
     for order, (name, dept, members) in enumerate(teams):
         if (division, name) in existing_keys:
             skipped += 1
@@ -139,14 +183,60 @@ def seed(division: str, teams: list[tuple[str, str, list[str]]]) -> None:
             failed += 1
             print(f"  ! {name}: HTTP {status} {body}")
 
-    print(f"[{division}] created={created} skipped={skipped} failed={failed}")
+    print(f"[teams/{division}] created={created} skipped={skipped} failed={failed}")
+
+
+def seed_participants(opener, api_base: str) -> None:
+    status, existing = _request(opener, "GET", f"{api_base}/api/v1/participants")
+    if status != 200 or not isinstance(existing, list):
+        sys.exit(f"List participants failed: HTTP {status}")
+    # Skip-key: (category, name, pair_no) — pair_no may legitimately differ between same-named entries.
+    existing_keys: set[tuple[str, str, int | None]] = {
+        (p["category"], p["name"], p.get("pair_no")) for p in existing
+    }
+
+    counts = {"created": 0, "skipped": 0, "failed": 0}
+
+    def post_one(payload: dict) -> None:
+        key = (payload["category"], payload["name"], payload.get("pair_no"))
+        if key in existing_keys:
+            counts["skipped"] += 1
+            return
+        status, body = _request(opener, "POST", f"{api_base}/api/v1/participants", payload)
+        if status in (200, 201):
+            counts["created"] += 1
+            existing_keys.add(key)
+        else:
+            counts["failed"] += 1
+            print(f"  ! {payload['name']}: HTTP {status} {body}")
+
+    for seed_no, (team, name) in enumerate(SINGLES_MEN, start=1):
+        post_one({"category": "men_singles", "name": name, "team": team, "seed": seed_no})
+
+    for seed_no, (team, name) in enumerate(SINGLES_WOMEN, start=1):
+        post_one({"category": "women_singles", "name": name, "team": team, "seed": seed_no})
+
+    for pair_no, (name_a, name_b) in enumerate(DOUBLES, start=1):
+        for nm in (name_a, name_b):
+            post_one({"category": "doubles", "name": nm, "pair_no": pair_no})
+
+    print(f"[participants] created={counts['created']} skipped={counts['skipped']} failed={counts['failed']}")
 
 
 def main() -> None:
+    api_base = os.environ.get("API_BASE", "http://localhost:8000").rstrip("/")
+    password = os.environ.get("ADMIN_PASSWORD")
+    if not password:
+        sys.exit("Missing ADMIN_PASSWORD env var")
+
+    opener = _login(api_base, password)
+
     if MEN_TEAMS:
-        seed("men", MEN_TEAMS)
+        seed_teams(opener, api_base, "men", MEN_TEAMS)
     if WOMEN_TEAMS:
-        seed("women", WOMEN_TEAMS)
+        seed_teams(opener, api_base, "women", WOMEN_TEAMS)
+    if SINGLES_MEN or SINGLES_WOMEN or DOUBLES:
+        seed_participants(opener, api_base)
 
 
 if __name__ == "__main__":

@@ -43,6 +43,15 @@ const navItems: NavItem[] = [
       { href: "/teams/women", label: "女團", description: "" },
     ],
   },
+  {
+    href: "/participants",
+    label: "參賽名單",
+    children: [
+      { href: "/participants/men_singles", label: "公開男單", description: "" },
+      { href: "/participants/women_singles", label: "公開女單", description: "" },
+      { href: "/participants/doubles", label: "歡樂雙打", description: "" },
+    ],
+  },
   { href: "/results", label: "賽果" },
   {
     href: "/admin",

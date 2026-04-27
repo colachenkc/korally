@@ -104,3 +104,23 @@ export type Team = {
   members_text: string | null;
   display_order: number;
 };
+
+export type ParticipantCategory = "men_singles" | "women_singles" | "doubles";
+
+export const PARTICIPANT_CATEGORY_LABEL: Record<ParticipantCategory, string> = {
+  men_singles: "公開男單",
+  women_singles: "公開女單",
+  doubles: "歡樂雙打",
+};
+
+export type Participant = {
+  id: number;
+  tournament_id: number;
+  category: ParticipantCategory;
+  name: string;
+  team: string | null;
+  pair_no: number | null;
+  seed: number | null;
+  checked_in: boolean;
+  checked_in_at: string | null;
+};

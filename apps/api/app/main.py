@@ -24,6 +24,11 @@ def _migrate_sqlite() -> None:
             ("call_created_at", "DATETIME"),
             ("call_broadcasted_at", "DATETIME"),
         ],
+        "participants": [
+            ("pair_no", "INTEGER"),
+            ("checked_in", "INTEGER NOT NULL DEFAULT 0"),
+            ("checked_in_at", "DATETIME"),
+        ],
     }
     with engine.begin() as conn:
         for table_name, cols in additions.items():

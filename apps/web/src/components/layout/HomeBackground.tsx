@@ -18,6 +18,7 @@ const BACKGROUNDS: Array<{ match: string; exact?: boolean; bg: BackgroundSet }> 
   { match: "/live", bg: { desktop: "/115全大運.jpg" } },
   { match: "/schedule", bg: { desktop: "/115全大運.jpg" } },
   { match: "/teams", bg: { desktop: "/115全大運.jpg" } },
+  { match: "/participants", bg: { desktop: "/115全大運.jpg" } },
   { match: "/results", bg: { desktop: "/115全大運.jpg" } },
 ];
 
