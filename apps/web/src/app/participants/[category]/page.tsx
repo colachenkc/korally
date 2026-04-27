@@ -138,9 +138,7 @@ function PersonRow({ person }: { person: Participant }) {
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0 flex-1">
         <div className="text-base font-medium text-ink md:text-lg">{person.name}</div>
-        {person.team ? (
-          <div className="mt-0.5 text-xs text-ink-muted md:text-sm">{person.team}</div>
-        ) : null}
+        <PersonMeta team={person.team} studentId={person.student_id} />
       </div>
       <CheckInBadge checked={person.checked_in} />
     </li>
@@ -160,14 +158,32 @@ function PairRow({ pairNo, members }: { pairNo: number; members: Participant[] }
           <li key={m.id} className="flex items-center justify-between gap-3 py-2">
             <div className="min-w-0 flex-1">
               <div className="text-base font-medium text-ink md:text-lg">{m.name}</div>
-              {m.team ? (
-                <div className="mt-0.5 text-xs text-ink-muted md:text-sm">{m.team}</div>
-              ) : null}
+              <PersonMeta team={m.team} studentId={m.student_id} />
             </div>
             <CheckInBadge checked={m.checked_in} />
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function PersonMeta({
+  team,
+  studentId,
+}: {
+  team: string | null;
+  studentId: string | null;
+}) {
+  if (!team && !studentId) return null;
+  return (
+    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      {team ? (
+        <span className="text-xs text-ink-muted md:text-sm">{team}</span>
+      ) : null}
+      {studentId ? (
+        <span className="font-mono text-[11px] text-ink-faint md:text-xs">{studentId}</span>
+      ) : null}
     </div>
   );
 }

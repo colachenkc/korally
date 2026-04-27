@@ -54,6 +54,7 @@ def create_participant(payload: ParticipantCreate, db: Session = Depends(get_db)
         category=payload.category,
         name=payload.name.strip(),
         team=(payload.team or "").strip() or None,
+        student_id=(payload.student_id or "").strip() or None,
         pair_no=payload.pair_no,
         seed=payload.seed,
         checked_in=False,
@@ -76,7 +77,7 @@ def update_participant(
     if not p:
         raise HTTPException(status_code=404, detail="Participant not found")
     data = payload.model_dump(exclude_unset=True)
-    for f in ("name", "team"):
+    for f in ("name", "team", "student_id"):
         if f in data and isinstance(data[f], str):
             data[f] = data[f].strip() or (None if f != "name" else p.name)
     for field, value in data.items():

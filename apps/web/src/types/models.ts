@@ -119,6 +119,7 @@ export type Participant = {
   category: ParticipantCategory;
   name: string;
   team: string | null;
+  student_id: string | null;
   pair_no: number | null;
   seed: number | null;
   checked_in: boolean;

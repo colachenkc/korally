@@ -14,6 +14,7 @@ class Participant(Base, TimestampMixin):
     tournament_id: Mapped[int] = mapped_column(ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     team: Mapped[str | None] = mapped_column(String(120))
+    student_id: Mapped[str | None] = mapped_column(String(50))
     # category values used by the public roster page: "men_singles" | "women_singles" | "doubles"
     category: Mapped[str | None] = mapped_column(String(80))
     seed: Mapped[int | None] = mapped_column(Integer)

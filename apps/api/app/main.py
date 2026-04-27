@@ -28,6 +28,7 @@ def _migrate_sqlite() -> None:
             ("pair_no", "INTEGER"),
             ("checked_in", "INTEGER NOT NULL DEFAULT 0"),
             ("checked_in_at", "DATETIME"),
+            ("student_id", "VARCHAR(50)"),
         ],
     }
     with engine.begin() as conn:

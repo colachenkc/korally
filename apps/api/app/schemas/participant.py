@@ -12,6 +12,7 @@ class ParticipantBase(BaseModel):
     category: ParticipantCategory
     name: str = Field(min_length=1, max_length=120)
     team: str | None = None
+    student_id: str | None = None
     pair_no: int | None = None
     seed: int | None = None
 
@@ -24,6 +25,7 @@ class ParticipantUpdate(BaseModel):
     category: ParticipantCategory | None = None
     name: str | None = None
     team: str | None = None
+    student_id: str | None = None
     pair_no: int | None = None
     seed: int | None = None
 
