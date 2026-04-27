@@ -11,6 +11,7 @@ from app.models.referee import Referee
 from app.models.schedule_change_log import ScheduleChangeLog
 from app.models.stage import Stage
 from app.models.table import Table
+from app.models.team import Team
 from app.models.tournament import Tournament
 
 __all__ = [
@@ -28,5 +29,6 @@ __all__ = [
     "ScheduleImportBatch",
     "Stage",
     "Table",
+    "Team",
     "Tournament",
 ]

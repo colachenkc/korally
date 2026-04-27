@@ -87,3 +87,20 @@ export type ScheduleDoc = {
   uploaded_by: string | null;
   created_at: string;
 };
+
+export type TeamDivision = "men" | "women";
+
+export const TEAM_DIVISION_LABEL: Record<TeamDivision, string> = {
+  men: "男團",
+  women: "女團",
+};
+
+export type Team = {
+  id: number;
+  tournament_id: number;
+  division: TeamDivision;
+  name: string;
+  department: string | null;
+  members_text: string | null;
+  display_order: number;
+};

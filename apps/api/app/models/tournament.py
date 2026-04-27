@@ -34,3 +34,6 @@ class Tournament(Base, TimestampMixin):
     main_desks: Mapped[list["MainDesk"]] = relationship(  # noqa: F821
         back_populates="tournament", cascade="all, delete-orphan"
     )
+    teams: Mapped[list["Team"]] = relationship(  # noqa: F821
+        back_populates="tournament", cascade="all, delete-orphan"
+    )

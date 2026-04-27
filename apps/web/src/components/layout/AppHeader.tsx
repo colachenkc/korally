@@ -35,6 +35,7 @@ const navItems: NavItem[] = [
       description: "",
     })),
   },
+  { href: "/teams", label: "團賽名單" },
   { href: "/results", label: "賽果" },
   {
     href: "/admin",
@@ -54,6 +55,11 @@ const navItems: NavItem[] = [
         href: "/admin/tables",
         label: "球檯管理",
         description: "開賽、結束、裁判指派。",
+      },
+      {
+        href: "/admin/teams",
+        label: "團賽名單",
+        description: "新增、編輯男 / 女團隊伍與隊員資料。",
       },
       {
         href: "/admin/main-desk",

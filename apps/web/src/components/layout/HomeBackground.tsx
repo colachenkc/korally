@@ -17,6 +17,7 @@ const BACKGROUNDS: Array<{ match: string; exact?: boolean; bg: BackgroundSet }> 
   { match: "/", exact: true, bg: { desktop: "/homepage-hero.jpg", mobile: "/IMG_4503.JPG" } },
   { match: "/live", bg: { desktop: "/115全大運.jpg" } },
   { match: "/schedule", bg: { desktop: "/115全大運.jpg" } },
+  { match: "/teams", bg: { desktop: "/115全大運.jpg" } },
   { match: "/results", bg: { desktop: "/115全大運.jpg" } },
 ];
 
