@@ -35,7 +35,14 @@ const navItems: NavItem[] = [
       description: "",
     })),
   },
-  { href: "/teams", label: "團賽名單" },
+  {
+    href: "/teams",
+    label: "團賽名單",
+    children: [
+      { href: "/teams/men", label: "男團", description: "" },
+      { href: "/teams/women", label: "女團", description: "" },
+    ],
+  },
   { href: "/results", label: "賽果" },
   {
     href: "/admin",
@@ -91,7 +98,7 @@ export function AppHeader() {
 
   const hoveredItem = hovered ? navItems.find((i) => i.href === hovered) : null;
   const hoveredHasChildren = !!hoveredItem?.children?.length;
-  const isScheduleDropdown = hoveredItem?.href === "/schedule";
+  const isCompactDropdown = hoveredHasChildren && hoveredItem!.children!.every((c) => !c.description);
 
   async function handleLogout() {
     await authApi.logout();
@@ -175,7 +182,7 @@ export function AppHeader() {
           {/* Desktop dropdown panel */}
           {hoveredHasChildren ? (
             <div className="hidden border-t border-cream-200/70 bg-cream-50/40 md:block">
-              {isScheduleDropdown ? (
+              {isCompactDropdown ? (
                 <div className="grid gap-2 px-6 py-5 sm:grid-cols-3">
                   {hoveredItem!.children!.map((child) => (
                     <Link
