@@ -84,14 +84,11 @@ function TeamRow({ team }: { team: Team }) {
         {team.department ? (
           <div className="mt-0.5 text-sm text-ink-muted">{team.department}</div>
         ) : null}
-        <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-ink-faint">
-          {members.length} 人
-        </div>
       </div>
       {members.length > 0 ? (
-        <div className="flex flex-1 flex-wrap gap-x-4 gap-y-1.5 md:items-center">
+        <div className="flex flex-1 flex-wrap gap-x-5 gap-y-2 md:items-center">
           {members.map((m, i) => (
-            <span key={i} className="text-sm text-ink-soft">
+            <span key={i} className="text-base text-ink md:text-lg">
               {m}
             </span>
           ))}
