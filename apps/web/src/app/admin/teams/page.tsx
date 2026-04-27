@@ -199,7 +199,7 @@ export default function AdminTeamsPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl border border-cream-200 bg-white p-6 shadow-pop"
+            className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-200 bg-white p-6 shadow-pop"
           >
             <div className="mb-4 flex items-baseline justify-between">
               <div>

@@ -19,6 +19,11 @@ const adminLinks = [
     description: "新增 / 刪除球檯、開始與結束比賽、指派裁判。",
   },
   {
+    href: "/admin/teams",
+    title: "團賽名單",
+    description: "新增、編輯男 / 女團隊伍與隊員資料。",
+  },
+  {
     href: "/admin/main-desk",
     title: "大會桌管理",
     description: "編輯大會桌名稱、狀態、目前輪班。",
