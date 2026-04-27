@@ -194,13 +194,14 @@ export default function AdminTeamsPage() {
 
       {editingId !== null ? (
         <div
-          className="fixed inset-0 z-30 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-30 overflow-y-auto bg-ink/40 backdrop-blur-sm"
           onClick={cancelEdit}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-200 bg-white p-6 shadow-pop"
-          >
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border border-cream-200 bg-white p-6 shadow-pop"
+            >
             <div className="mb-4 flex items-baseline justify-between">
               <div>
                 <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
@@ -288,6 +289,7 @@ export default function AdminTeamsPage() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       ) : null}
