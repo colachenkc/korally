@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { authApi, type Role } from "@/lib/auth";
-import { SCHEDULE_CATEGORIES } from "@/types/models";
+import { SCHEDULE_GROUPS } from "@/types/models";
 
 const ROLE_LABEL: Record<Role, string> = { admin: "大會", referee: "裁判" };
 
@@ -29,9 +29,9 @@ const navItems: NavItem[] = [
   {
     href: "/schedule",
     label: "賽程表",
-    children: SCHEDULE_CATEGORIES.map((cat) => ({
-      href: `/schedule?c=${encodeURIComponent(cat)}`,
-      label: cat,
+    children: SCHEDULE_GROUPS.map((g) => ({
+      href: `/schedule?c=${encodeURIComponent(g.categories[0])}`,
+      label: g.label,
       description: "",
     })),
   },

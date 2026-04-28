@@ -6,9 +6,16 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, assetUrl } from "@/lib/api-client";
 import {
   SCHEDULE_CATEGORIES,
+  SCHEDULE_GROUPS,
   type ScheduleCategory,
   type ScheduleDoc,
 } from "@/types/models";
+
+const DEFAULT_CATEGORY: ScheduleCategory = SCHEDULE_GROUPS[0].categories[0];
+
+function groupForCategory(cat: ScheduleCategory) {
+  return SCHEDULE_GROUPS.find((g) => (g.categories as readonly string[]).includes(cat)) ?? null;
+}
 
 export default function SchedulePage() {
   return (
@@ -23,7 +30,7 @@ function ScheduleBody() {
   const urlCategory = params.get("c");
 
   const [docs, setDocs] = useState<ScheduleDoc[]>([]);
-  const [active, setActive] = useState<ScheduleCategory>(SCHEDULE_CATEGORIES[0]);
+  const [active, setActive] = useState<ScheduleCategory>(DEFAULT_CATEGORY);
   const [error, setError] = useState<string | null>(null);
 
   // Sync active tab with URL query param
@@ -53,6 +60,7 @@ function ScheduleBody() {
     return map;
   }, [docs]);
 
+  const activeGroup = groupForCategory(active) ?? SCHEDULE_GROUPS[0];
   const activeDoc = byCategory.get(active);
   const activeUrl = assetUrl(activeDoc?.pdf_url);
 
@@ -77,28 +85,51 @@ function ScheduleBody() {
         ) : null}
       </header>
 
+      {/* Top-level group tabs */}
       <div className="flex flex-wrap gap-2">
-        {SCHEDULE_CATEGORIES.map((cat) => {
-          const exists = byCategory.has(cat);
-          const isActive = cat === active;
+        {SCHEDULE_GROUPS.map((g) => {
+          const isActive = g.key === activeGroup.key;
           return (
             <button
-              key={cat}
-              onClick={() => setActive(cat)}
-              className={`rounded-full border px-3 py-1 text-sm transition ${
+              key={g.key}
+              onClick={() => setActive(g.categories[0])}
+              className={`rounded-full border px-4 py-1.5 text-sm transition ${
                 isActive
                   ? "border-ink bg-ink text-cream-50"
-                  : exists
-                    ? "border-cream-200 bg-white text-ink-soft hover:border-ink/30"
-                    : "border-cream-100 bg-cream-100 text-ink-faint"
+                  : "border-cream-200 bg-white text-ink-soft hover:border-ink/30"
               }`}
             >
-              {cat}
-              {!exists ? <span className="ml-1 text-[10px]">（無）</span> : null}
+              {g.label}
             </button>
           );
         })}
       </div>
+
+      {/* Sub-tabs (only when group has multiple categories) */}
+      {activeGroup.categories.length > 1 ? (
+        <div className="flex flex-wrap gap-2">
+          {activeGroup.categories.map((cat) => {
+            const exists = byCategory.has(cat);
+            const isActive = cat === active;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActive(cat)}
+                className={`rounded-full border px-3 py-1 text-xs transition ${
+                  isActive
+                    ? "border-ink bg-cream-100 text-ink"
+                    : exists
+                      ? "border-cream-200 bg-white text-ink-soft hover:border-ink/30"
+                      : "border-cream-100 bg-cream-100 text-ink-faint"
+                }`}
+              >
+                {cat}
+                {!exists ? <span className="ml-1 text-[10px]">（無）</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {error ? (
         <div className="rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-3 text-sm text-accent-coral">
