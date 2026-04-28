@@ -46,6 +46,7 @@ export default function CheckInPage() {
   const controlsRef = useRef<IScannerControls | null>(null);
   const lastScanRef = useRef<{ studentId: string; ts: number } | null>(null);
   const inFlightRef = useRef<Set<string>>(new Set());
+  const beepRef = useRef<HTMLAudioElement | null>(null);
 
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [latest, setLatest] = useState<LogEntry | null>(null);
@@ -57,6 +58,41 @@ export default function CheckInPage() {
       router.replace(`/login?redirect=${encodeURIComponent("/check-in")}`);
     }
   }, [authStatus, router]);
+
+  // Preload beep + unlock iOS audio on first user gesture.
+  useEffect(() => {
+    const audio = new Audio("/scan.mp3");
+    audio.preload = "auto";
+    beepRef.current = audio;
+    const prime = () => {
+      if (!beepRef.current) return;
+      beepRef.current.muted = true;
+      beepRef.current
+        .play()
+        .then(() => {
+          beepRef.current!.pause();
+          beepRef.current!.currentTime = 0;
+          beepRef.current!.muted = false;
+        })
+        .catch(() => {
+          if (beepRef.current) beepRef.current.muted = false;
+        });
+    };
+    window.addEventListener("pointerdown", prime, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", prime);
+      beepRef.current = null;
+    };
+  }, []);
+
+  const playBeep = useCallback(() => {
+    const a = beepRef.current;
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => {
+      // iOS may block until first user interaction; the prime handler above takes care of it.
+    });
+  }, []);
 
   const handleScan = useCallback(async (rawText: string) => {
     const studentId = rawText.slice(0, 9).toUpperCase();
@@ -115,6 +151,7 @@ export default function CheckInPage() {
       setLatest(entry);
       setLog((prev) => [entry, ...prev].slice(0, MAX_LOG));
 
+      if (!allWereChecked) playBeep();
       // Optional haptic feedback on supported devices.
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate(allWereChecked ? 30 : [40, 60, 40]);
@@ -133,7 +170,7 @@ export default function CheckInPage() {
     } finally {
       inFlightRef.current.delete(studentId);
     }
-  }, []);
+  }, [playBeep]);
 
   useEffect(() => {
     if (!isAuthed) return;
