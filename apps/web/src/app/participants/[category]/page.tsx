@@ -3,7 +3,8 @@
 import { notFound } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 
-import { apiGet } from "@/lib/api-client";
+import { useAuth } from "@/hooks/useAuth";
+import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
 import {
   PARTICIPANT_CATEGORY_LABEL,
   type Participant,
@@ -28,6 +29,10 @@ export default function ParticipantsByCategoryPage({
 
   const [people, setPeople] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const { status: authStatus, role } = useAuth();
+  const canCheckIn = authStatus === "authenticated";
+  const canUndo = role === "admin";
 
   const load = useCallback(async () => {
     try {
@@ -42,6 +47,30 @@ export default function ParticipantsByCategoryPage({
   useEffect(() => {
     void load();
   }, [load]);
+
+  async function handleCheckIn(id: number) {
+    setBusyId(id);
+    try {
+      await apiPost(`/participants/${id}/check-in`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "報到失敗");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleUndo(id: number) {
+    setBusyId(id);
+    try {
+      await apiDelete(`/participants/${id}/check-in`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "取消失敗");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   const summary = useMemo(() => {
     const total = people.length;
@@ -96,14 +125,23 @@ export default function ParticipantsByCategoryPage({
       ) : isDoubles ? (
         <div className="space-y-2">
           {pairs!.map(({ pair_no, members }) => (
-            <PairRow key={pair_no} pairNo={pair_no} members={members} />
+            <PairRow
+              key={pair_no}
+              pairNo={pair_no}
+              members={members}
+              actions={{ busyId, canCheckIn, canUndo, onCheckIn: handleCheckIn, onUndo: handleUndo }}
+            />
           ))}
         </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card">
           <ul className="divide-y divide-cream-200/60">
             {people.map((p) => (
-              <PersonRow key={p.id} person={p} />
+              <PersonRow
+                key={p.id}
+                person={p}
+                actions={{ busyId, canCheckIn, canUndo, onCheckIn: handleCheckIn, onUndo: handleUndo }}
+              />
             ))}
           </ul>
         </div>
@@ -133,19 +171,35 @@ function Chip({
   );
 }
 
-function PersonRow({ person }: { person: Participant }) {
+type RowActions = {
+  busyId: number | null;
+  canCheckIn: boolean;
+  canUndo: boolean;
+  onCheckIn: (id: number) => void;
+  onUndo: (id: number) => void;
+};
+
+function PersonRow({ person, actions }: { person: Participant; actions: RowActions }) {
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0 flex-1">
         <div className="text-base font-medium text-ink md:text-lg">{person.name}</div>
         <PersonMeta team={person.team} studentId={person.student_id} />
       </div>
-      <CheckInBadge checked={person.checked_in} />
+      <CheckInControl person={person} actions={actions} />
     </li>
   );
 }
 
-function PairRow({ pairNo, members }: { pairNo: number; members: Participant[] }) {
+function PairRow({
+  pairNo,
+  members,
+  actions,
+}: {
+  pairNo: number;
+  members: Participant[];
+  actions: RowActions;
+}) {
   return (
     <div className="rounded-2xl border border-cream-200 bg-white p-4 shadow-card">
       <div className="mb-2 flex items-center justify-between">
@@ -160,7 +214,7 @@ function PairRow({ pairNo, members }: { pairNo: number; members: Participant[] }
               <div className="text-base font-medium text-ink md:text-lg">{m.name}</div>
               <PersonMeta team={m.team} studentId={m.student_id} />
             </div>
-            <CheckInBadge checked={m.checked_in} />
+            <CheckInControl person={m} actions={actions} />
           </li>
         ))}
       </ul>
@@ -188,19 +242,47 @@ function PersonMeta({
   );
 }
 
-function CheckInBadge({ checked }: { checked: boolean }) {
-  if (checked) {
-    return (
-      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-sky/15 px-3 py-1 text-xs font-medium text-accent-sky">
-        <span className="h-1.5 w-1.5 rounded-full bg-current" />
-        已報到
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cream-100 px-3 py-1 text-xs font-medium text-ink-faint">
+function CheckInControl({
+  person,
+  actions,
+}: {
+  person: Participant;
+  actions: RowActions;
+}) {
+  const busy = actions.busyId === person.id;
+  const checked = person.checked_in;
+  const clickable = checked ? actions.canUndo : actions.canCheckIn;
+
+  const checkedClass =
+    "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-sky/15 px-3 py-1 text-xs font-medium text-accent-sky";
+  const uncheckedClass =
+    "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cream-100 px-3 py-1 text-xs font-medium text-ink-faint";
+
+  const inner = checked ? (
+    <>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      已報到
+    </>
+  ) : (
+    <>
       <span className="h-1.5 w-1.5 rounded-full bg-current opacity-50" />
       未報到
-    </span>
+    </>
+  );
+
+  if (!clickable) {
+    return <span className={checked ? checkedClass : uncheckedClass}>{inner}</span>;
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => (checked ? actions.onUndo(person.id) : actions.onCheckIn(person.id))}
+      title={checked ? "點此取消報到" : "點此標記報到"}
+      className={`${checked ? checkedClass : uncheckedClass} cursor-pointer transition hover:brightness-95 disabled:opacity-50`}
+    >
+      {busy ? <span className="font-mono">⋯</span> : inner}
+    </button>
   );
 }
