@@ -238,8 +238,29 @@ export function AppHeader() {
                         }`}
                       >
                         <span className={active ? "font-semibold" : ""}>{item.label}</span>
-                        {item.children ? <ChevronRight /> : null}
                       </Link>
+                      {item.children?.length ? (
+                        <ul className="border-t border-cream-200/50 bg-cream-50/50">
+                          {item.children.map((child) => {
+                            const childActive = isActive(pathname, child.href);
+                            return (
+                              <li key={child.href}>
+                                <Link
+                                  href={child.href}
+                                  onClick={() => setMobileOpen(false)}
+                                  className={`block py-2.5 pl-5 pr-0 text-base transition-colors md:pl-10 md:pr-6 ${
+                                    childActive
+                                      ? "font-medium text-ink"
+                                      : "text-ink-soft"
+                                  }`}
+                                >
+                                  {child.label}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
                     </li>
                   );
                 })}
@@ -371,23 +392,6 @@ function CloseIcon() {
     >
       <line x1="5" y1="5" x2="15" y2="15" />
       <line x1="15" y1="5" x2="5" y2="15" />
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg
-      viewBox="0 0 12 12"
-      aria-hidden
-      className="h-4 w-4 text-ink-muted"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="4.5 3 7.5 6 4.5 9" />
     </svg>
   );
 }
