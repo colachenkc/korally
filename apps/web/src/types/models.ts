@@ -91,8 +91,8 @@ export type ScheduleDoc = {
 export type TeamDivision = "men" | "women";
 
 export const TEAM_DIVISION_LABEL: Record<TeamDivision, string> = {
-  men: "男團",
-  women: "女團",
+  men: "公開男團",
+  women: "公開女團",
 };
 
 export type Team = {

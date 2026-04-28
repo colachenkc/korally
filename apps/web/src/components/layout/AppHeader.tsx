@@ -36,20 +36,14 @@ const navItems: NavItem[] = [
     })),
   },
   {
-    href: "/teams",
-    label: "團賽名單",
-    children: [
-      { href: "/teams/men", label: "男團", description: "" },
-      { href: "/teams/women", label: "女團", description: "" },
-    ],
-  },
-  {
     href: "/participants",
     label: "參賽名單",
     children: [
       { href: "/participants/men_singles", label: "公開男單", description: "" },
       { href: "/participants/women_singles", label: "公開女單", description: "" },
       { href: "/participants/doubles", label: "歡樂雙打", description: "" },
+      { href: "/teams/men", label: "公開男團", description: "" },
+      { href: "/teams/women", label: "公開女團", description: "" },
     ],
   },
   { href: "/results", label: "賽果" },
@@ -91,6 +85,11 @@ function isActive(pathname: string | null, href: string): boolean {
   if (href === "/") return pathname === "/";
   const base = href.split("?")[0];
   return pathname === base || pathname.startsWith(`${base}/`);
+}
+
+function isItemActive(pathname: string | null, item: NavItem): boolean {
+  if (isActive(pathname, item.href)) return true;
+  return item.children?.some((c) => isActive(pathname, c.href)) ?? false;
 }
 
 export function AppHeader() {
@@ -146,7 +145,7 @@ export function AppHeader() {
                   <DesktopNavItem
                     key={item.href}
                     item={item}
-                    active={isActive(pathname, item.href)}
+                    active={isItemActive(pathname, item)}
                     hovered={hovered}
                     onHover={setHovered}
                   />
@@ -227,7 +226,7 @@ export function AppHeader() {
             <nav className="border-t border-cream-200/70 md:hidden">
               <ul>
                 {navItems.map((item) => {
-                  const active = isActive(pathname, item.href);
+                  const active = isItemActive(pathname, item);
                   const base = item.href.split("?")[0];
                   return (
                     <li key={item.href} className="border-b border-cream-200/70 last:border-b-0">
