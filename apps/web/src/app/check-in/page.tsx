@@ -145,7 +145,14 @@ export default function CheckInPage() {
 
     reader
       .decodeFromConstraints(
-        { video: { facingMode: { ideal: "environment" } } },
+        {
+          video: {
+            facingMode: { ideal: "environment" },
+            // Higher resolution helps decode narrow barcode bars from a distance.
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        },
         video,
         (result) => {
           if (result) void handleScan(result.getText());
@@ -219,9 +226,20 @@ export default function CheckInPage() {
 }
 
 function ScanOverlay() {
+  // Box matches a typical student-ID barcode aspect ratio (~4:1) so the user
+  // has an obvious visual cue for how to hold the card.
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center">
-      <div className="relative h-[42%] w-[68%] rounded-xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.32)]">
+      <div className="relative aspect-[4/1] w-[82%] max-w-[420px] rounded-md shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+        {/* Subtle border around the cutout */}
+        <div className="absolute inset-0 rounded-md border border-white/40" />
+        {/* L-shaped corner markers */}
+        <span className="absolute -left-0.5 -top-0.5 h-4 w-4 rounded-tl-md border-l-[3px] border-t-[3px] border-white" />
+        <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-tr-md border-r-[3px] border-t-[3px] border-white" />
+        <span className="absolute -bottom-0.5 -left-0.5 h-4 w-4 rounded-bl-md border-b-[3px] border-l-[3px] border-white" />
+        <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-br-md border-b-[3px] border-r-[3px] border-white" />
+        {/* Center crosshair line — barcode should land flat across this */}
+        <span className="absolute left-2 right-2 top-1/2 h-px -translate-y-1/2 bg-white/35" />
         <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em] text-white/85">
           Align barcode here
         </span>
