@@ -89,6 +89,30 @@ export default function LivePage() {
 
   const pendingBroadcast = tables.filter((t) => t.call_side && !t.call_broadcasted_at);
 
+  // Layout: hall is laid out as `PER_ROW` tables per physical row.
+  // Desktop: render 7-col grid (matches hall, horizontal scroll if needed).
+  // Mobile: rotate 90° + flip so T1-T7 (first physical row) lands on the right column,
+  // making the page scroll vertically instead of horizontally.
+  const PER_ROW = 7;
+  const sortedTables = [...tables].sort((a, b) => a.id - b.id);
+  const physRows = Math.max(1, Math.ceil(sortedTables.length / PER_ROW));
+  const mobileGrid: (TableItem | null)[] = Array(physRows * PER_ROW).fill(null);
+  sortedTables.forEach((t, i) => {
+    const physRow = Math.floor(i / PER_ROW);
+    const physCol = i % PER_ROW;
+    const mobileRow = physCol;
+    const mobileCol = physRows - 1 - physRow;
+    mobileGrid[mobileRow * physRows + mobileCol] = t;
+  });
+  const mobileColsClass =
+    physRows === 3
+      ? "grid-cols-3"
+      : physRows === 2
+        ? "grid-cols-2"
+        : physRows === 1
+          ? "grid-cols-1"
+          : "grid-cols-3";
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
@@ -129,11 +153,28 @@ export default function LivePage() {
           尚未建立任何球檯。請至 管理後台 → 球檯管理 新增。
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <div className="grid min-w-[980px] auto-rows-fr grid-cols-7 gap-x-1.5 gap-y-2 md:min-w-[1380px] md:gap-x-2 md:gap-y-3">
-            {[...tables]
-              .sort((a, b) => a.id - b.id)
-              .map((t) => (
+        <>
+          {/* Mobile: vertical scroll, T1-T7 on rightmost column */}
+          <div className={`grid auto-rows-fr gap-x-1.5 gap-y-2 ${mobileColsClass} md:hidden`}>
+            {mobileGrid.map((t, i) =>
+              t ? (
+                <LiveTableCard
+                  key={t.id}
+                  table={t}
+                  isAuthed={isAuthed}
+                  busy={busyTableId === t.id}
+                  onCall={() => setCallTarget(t)}
+                  onClearCall={() => clearCall(t.id)}
+                />
+              ) : (
+                <div key={`empty-${i}`} />
+              ),
+            )}
+          </div>
+          {/* Desktop: horizontal scroll, 7-col grid matching the hall layout */}
+          <div className="hidden overflow-x-auto md:block">
+            <div className="grid min-w-[1380px] auto-rows-fr grid-cols-7 gap-x-2 gap-y-3">
+              {sortedTables.map((t) => (
                 <LiveTableCard
                   key={t.id}
                   table={t}
@@ -143,8 +184,9 @@ export default function LivePage() {
                   onClearCall={() => clearCall(t.id)}
                 />
               ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {mainDesks.length > 0 ? (
