@@ -1,9 +1,15 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Header, HTTPException, Response, status
 from pydantic import BaseModel
 
-from app.core.auth import COOKIE_NAME, Role, make_session_token, verify_session_token
+from app.core.auth import (
+    COOKIE_NAME,
+    Role,
+    extract_token,
+    make_session_token,
+    verify_session_token,
+)
 from app.core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -16,6 +22,7 @@ class LoginBody(BaseModel):
 class AuthStatus(BaseModel):
     authenticated: bool
     role: Role | None = None
+    token: str | None = None  # only populated on successful login
 
 
 def _resolve_role(password: str) -> Role | None:
@@ -33,6 +40,8 @@ def login(body: LoginBody, response: Response) -> AuthStatus:
     if role is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="密碼錯誤")
     token = make_session_token(role)
+    # Set cookie for first-party flows. For Safari / cross-origin, the client
+    # falls back to using the returned token via Authorization header.
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
@@ -42,7 +51,7 @@ def login(body: LoginBody, response: Response) -> AuthStatus:
         samesite=settings.cookie_samesite,
         path="/",
     )
-    return AuthStatus(authenticated=True, role=role)
+    return AuthStatus(authenticated=True, role=role, token=token)
 
 
 @router.post("/logout", response_model=AuthStatus)
@@ -59,6 +68,9 @@ def logout(response: Response) -> AuthStatus:
 
 
 @router.get("/me", response_model=AuthStatus)
-def me(admin_session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None) -> AuthStatus:
-    role = verify_session_token(admin_session)
+def me(
+    admin_session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
+    authorization: Annotated[str | None, Header()] = None,
+) -> AuthStatus:
+    role = verify_session_token(extract_token(admin_session, authorization))
     return AuthStatus(authenticated=role is not None, role=role)

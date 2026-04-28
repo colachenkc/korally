@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { authApi, type Role } from "@/lib/auth";
+import { clearToken } from "@/lib/token";
 
 export type AuthState = {
   status: "loading" | "authenticated" | "anonymous";
@@ -21,9 +22,12 @@ export function useAuth(): AuthState {
       const res = await authApi.me();
       setStatus(res.authenticated ? "authenticated" : "anonymous");
       setRole(res.role);
+      // Drop stale token so we don't keep sending an expired Bearer header.
+      if (!res.authenticated) clearToken();
     } catch {
       setStatus("anonymous");
       setRole(null);
+      clearToken();
     }
   }, []);
 

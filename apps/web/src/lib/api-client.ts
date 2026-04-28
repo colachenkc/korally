@@ -1,3 +1,5 @@
+import { getToken } from "@/lib/token";
+
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 export const API_V1 = `${API_BASE}/api/v1`;
 
@@ -10,12 +12,20 @@ export class UnauthorizedError extends Error {
   }
 }
 
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { ...authHeaders() };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
   const res = await fetch(`${API_V1}${path}`, {
     method,
     cache: "no-store",
     credentials: "include",
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 401) throw new UnauthorizedError();
@@ -52,6 +62,7 @@ export async function apiUpload<T>(
     method: "POST",
     body: form,
     credentials: "include",
+    headers: authHeaders(),
   });
   if (res.status === 401) throw new UnauthorizedError();
   if (!res.ok) {

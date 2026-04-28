@@ -1,8 +1,13 @@
-"""Shared-password cookie auth with two roles: admin and referee.
+"""Shared-password auth with two roles: admin and referee.
 
 Token format: f"{role}|{expires}.{signature}" where signature = HMAC-SHA256
 of "{role}|{expires}" with settings.session_secret. Signing covers role so
 clients cannot tamper with privilege.
+
+Auth dependencies accept the token from EITHER:
+  - HTTP cookie `admin_session` (legacy / same-site flows)
+  - HTTP header `Authorization: Bearer <token>` (Safari/cross-origin friendly)
+The header takes precedence when both are present.
 """
 
 import base64
@@ -11,11 +16,12 @@ import hmac
 import time
 from typing import Annotated, Literal
 
-from fastapi import Cookie, HTTPException, status
+from fastapi import Cookie, Header, HTTPException, status
 
 from app.core.config import settings
 
 COOKIE_NAME = "admin_session"
+_BEARER_PREFIX = "Bearer "
 
 Role = Literal["admin", "referee"]
 _ROLES: tuple[str, ...] = ("admin", "referee")
@@ -54,10 +60,20 @@ def verify_session_token(token: str | None) -> Role | None:
     return role  # type: ignore[return-value]
 
 
+def extract_token(
+    cookie_token: str | None = None, authorization: str | None = None
+) -> str | None:
+    """Header takes precedence over cookie."""
+    if authorization and authorization.startswith(_BEARER_PREFIX):
+        return authorization[len(_BEARER_PREFIX):].strip() or None
+    return cookie_token
+
+
 def require_admin(
     admin_session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> Role:
-    role = verify_session_token(admin_session)
+    role = verify_session_token(extract_token(admin_session, authorization))
     if role != "admin":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -68,8 +84,9 @@ def require_admin(
 
 def require_referee_or_admin(
     admin_session: Annotated[str | None, Cookie(alias=COOKIE_NAME)] = None,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> Role:
-    role = verify_session_token(admin_session)
+    role = verify_session_token(extract_token(admin_session, authorization))
     if role not in _ROLES:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
