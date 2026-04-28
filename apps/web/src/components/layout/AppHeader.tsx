@@ -46,6 +46,7 @@ const navItems: NavItem[] = [
       { href: "/teams/women", label: "公開女團", description: "" },
     ],
   },
+  { href: "/check-in", label: "掃描報到" },
   { href: "/results", label: "賽果" },
   {
     href: "/admin",

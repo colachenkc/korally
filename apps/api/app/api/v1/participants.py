@@ -28,11 +28,14 @@ def _resolve_tournament_id(db: Session, tournament_id: int | None) -> int:
 @router.get("", response_model=list[ParticipantRead])
 def list_participants(
     category: str | None = Query(default=None, pattern="^(men_singles|women_singles|doubles)$"),
+    student_id: str | None = Query(default=None, max_length=50),
     db: Session = Depends(get_db),
 ) -> list[Participant]:
     q = db.query(Participant)
     if category:
         q = q.filter(Participant.category == category)
+    if student_id:
+        q = q.filter(Participant.student_id == student_id)
     # Doubles: order by pair_no then id; singles: order by seed (NULLS LAST) then id.
     return q.order_by(
         Participant.pair_no.asc().nulls_last(),
