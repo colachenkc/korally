@@ -98,11 +98,21 @@ export function AppHeader() {
   const { status, role, refresh } = useAuth();
   const [hovered, setHovered] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  function toggleExpanded(key: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   const hoveredItem = hovered ? navItems.find((i) => i.href === hovered) : null;
   const hoveredHasChildren = !!hoveredItem?.children?.length;
@@ -228,20 +238,35 @@ export function AppHeader() {
                 {navItems.map((item) => {
                   const active = isItemActive(pathname, item);
                   const base = item.href.split("?")[0];
+                  const hasChildren = !!item.children?.length;
+                  const isOpen = expanded.has(item.href);
                   return (
                     <li key={item.href} className="border-b border-cream-200/70 last:border-b-0">
-                      <Link
-                        href={base}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-0 py-4 text-lg transition-colors md:px-6 ${
-                          active ? "text-ink" : "text-ink-soft"
-                        }`}
-                      >
-                        <span className={active ? "font-semibold" : ""}>{item.label}</span>
-                      </Link>
-                      {item.children?.length ? (
+                      <div className="flex items-center justify-between gap-2 px-0 md:px-6">
+                        <Link
+                          href={base}
+                          onClick={() => setMobileOpen(false)}
+                          className={`flex-1 py-4 text-lg transition-colors ${
+                            active ? "text-ink" : "text-ink-soft"
+                          }`}
+                        >
+                          <span className={active ? "font-semibold" : ""}>{item.label}</span>
+                        </Link>
+                        {hasChildren ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(item.href)}
+                            aria-label={isOpen ? "收合子選單" : "展開子選單"}
+                            aria-expanded={isOpen}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-muted hover:bg-cream-100"
+                          >
+                            <Caret open={isOpen} />
+                          </button>
+                        ) : null}
+                      </div>
+                      {hasChildren && isOpen ? (
                         <ul className="border-t border-cream-200/50 bg-cream-50/50">
-                          {item.children.map((child) => {
+                          {item.children!.map((child) => {
                             const childActive = isActive(pathname, child.href);
                             return (
                               <li key={child.href}>
