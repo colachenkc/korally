@@ -265,7 +265,7 @@ export function AppHeader() {
                         ) : null}
                       </div>
                       {hasChildren && isOpen ? (
-                        <ul className="border-t border-cream-200/50 bg-cream-50/50">
+                        <ul className="mb-3 ml-3 mr-3 overflow-hidden rounded-xl border border-cream-200/70 bg-cream-50/60 md:ml-6 md:mr-6">
                           {item.children!.map((child) => {
                             const childActive = isActive(pathname, child.href);
                             return (
@@ -273,7 +273,7 @@ export function AppHeader() {
                                 <Link
                                   href={child.href}
                                   onClick={() => setMobileOpen(false)}
-                                  className={`block py-2.5 pl-5 pr-0 text-base transition-colors md:pl-10 md:pr-6 ${
+                                  className={`block py-2.5 pl-4 pr-4 text-base transition-colors md:pl-6 md:pr-6 ${
                                     childActive
                                       ? "font-medium text-ink"
                                       : "text-ink-soft"
