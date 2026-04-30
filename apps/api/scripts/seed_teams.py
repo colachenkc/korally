@@ -1,4 +1,4 @@
-"""Seed team rosters AND singles/doubles participant lists via the API.
+"""Seed team rosters, singles/doubles participant lists, and referees via the API.
 
 Usage (from apps/api directory):
 
@@ -239,6 +239,17 @@ DOUBLES: list[tuple[str, str | None, str, str | None]] = [
 ]
 
 
+# ---- Referees ------------------------------------------------------------
+
+REFEREES: list[str] = [
+    "陳翊華", "楊文政", "莊予睿", "曾仕達", "陳彥臻", "劉宥澤", "陳宏亮", "陸育安",
+    "黃國豪", "鍾尚恩", "陳柏霖", "陳思辰", "陳睿恩", "李柏諺", "呂學昂", "李彥霆",
+    "謝博仲", "吳沛耘", "陳鈺屏", "巫奕臻", "馬玉安", "張恩榕", "郭家彣", "魏黛甄",
+    "秦若涵", "郭千翠", "林芝安", "洪昀", "蘇品樺", "葉藴盈", "李宣穎", "李蕎羽",
+    "李沛穎", "鄭乙芳", "周芊妤", "張沄芳", "沈姿雨", "張詠青",
+]
+
+
 # ---- Seeding -------------------------------------------------------------
 
 
@@ -353,6 +364,28 @@ def seed_participants(opener, api_base: str) -> None:
     )
 
 
+def seed_referees(opener, api_base: str) -> None:
+    status, existing = _request(opener, "GET", f"{api_base}/api/v1/referees")
+    if status != 200 or not isinstance(existing, list):
+        sys.exit(f"List referees failed: HTTP {status}")
+    existing_names: set[str] = {r["name"] for r in existing}
+
+    created = skipped = failed = 0
+    for name in REFEREES:
+        if name in existing_names:
+            skipped += 1
+            continue
+        status, body = _request(opener, "POST", f"{api_base}/api/v1/referees", {"name": name})
+        if status in (200, 201):
+            created += 1
+            existing_names.add(name)
+        else:
+            failed += 1
+            print(f"  ! {name}: HTTP {status} {body}")
+
+    print(f"[referees] created={created} skipped={skipped} failed={failed}")
+
+
 def main() -> None:
     api_base = os.environ.get("API_BASE", "http://localhost:8000").rstrip("/")
     password = os.environ.get("ADMIN_PASSWORD")
@@ -367,6 +400,8 @@ def main() -> None:
         seed_teams(opener, api_base, "women", WOMEN_TEAMS)
     if SINGLES_MEN or SINGLES_WOMEN or DOUBLES:
         seed_participants(opener, api_base)
+    if REFEREES:
+        seed_referees(opener, api_base)
 
 
 if __name__ == "__main__":

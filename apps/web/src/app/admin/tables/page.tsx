@@ -1,16 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api-client";
-import type { TableItem } from "@/types/models";
+import type { Referee, TableItem } from "@/types/models";
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-cream-200 bg-cream-50 px-2.5 py-1.5 text-sm text-ink focus:border-ink/40 focus:outline-none";
 
 export default function AdminTablesPage() {
   const [tables, setTables] = useState<TableItem[]>([]);
+  const [referees, setReferees] = useState<Referee[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +22,12 @@ export default function AdminTablesPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGet<TableItem[]>("/tables");
-      setTables(data);
+      const [t, r] = await Promise.all([
+        apiGet<TableItem[]>("/tables"),
+        apiGet<Referee[]>("/referees"),
+      ]);
+      setTables(t);
+      setReferees(r);
     } catch (e) {
       setError(e instanceof Error ? e.message : "讀取失敗");
     } finally {
@@ -120,6 +125,7 @@ export default function AdminTablesPage() {
               <TableAdminCard
                 key={t.id}
                 table={t}
+                referees={referees}
                 onChanged={reload}
                 onDelete={() => handleDelete(t.id)}
               />
@@ -133,10 +139,12 @@ export default function AdminTablesPage() {
 
 function TableAdminCard({
   table,
+  referees,
   onChanged,
   onDelete,
 }: {
   table: TableItem;
+  referees: Referee[];
   onChanged: () => Promise<void>;
   onDelete: () => void;
 }) {
@@ -160,7 +168,7 @@ function TableAdminCard({
       </div>
 
       <div className="mt-4 border-t border-cream-200 pt-4">
-        <RefereesInput table={table} onChanged={onChanged} />
+        <RefereesInput table={table} referees={referees} onChanged={onChanged} />
       </div>
 
       <div className="mt-4 border-t border-cream-200 pt-4">
@@ -341,18 +349,47 @@ function FinishMatchForm({ table, onChanged }: { table: TableItem; onChanged: ()
   );
 }
 
-function RefereesInput({ table, onChanged }: { table: TableItem; onChanged: () => Promise<void> }) {
-  const [value, setValue] = useState(table.referees_text ?? "");
+function parseReferees(text: string | null | undefined): string[] {
+  if (!text) return [];
+  return text
+    .split(/[\n、,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function RefereesInput({
+  table,
+  referees,
+  onChanged,
+}: {
+  table: TableItem;
+  referees: Referee[];
+  onChanged: () => Promise<void>;
+}) {
+  const initialNames = useMemo(() => parseReferees(table.referees_text), [table.referees_text]);
+  const [selected, setSelected] = useState<string[]>(initialNames);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const dirty = value !== (table.referees_text ?? "");
+
+  // Reset local state when the underlying table updates (e.g. after save).
+  useEffect(() => {
+    setSelected(initialNames);
+  }, [initialNames]);
+
+  const dirty = selected.join("\n") !== initialNames.join("\n");
+
+  function toggle(name: string) {
+    setSelected((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  }
 
   async function handleSave() {
     setSaving(true);
     setErr(null);
     try {
       await apiPatch(`/tables/${table.id}`, {
-        referees_text: value.trim() || null,
+        referees_text: selected.length > 0 ? selected.join("\n") : null,
       });
       await onChanged();
     } catch (e) {
@@ -362,11 +399,14 @@ function RefereesInput({ table, onChanged }: { table: TableItem; onChanged: () =
     }
   }
 
+  // Names that exist on the table but aren't in the master referee list (legacy / typed names).
+  const adhoc = selected.filter((n) => !referees.some((r) => r.name === n));
+
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-muted">
-          裁判
+          裁判 {selected.length > 0 ? `(${selected.length})` : ""}
         </span>
         {dirty ? (
           <button
@@ -378,13 +418,57 @@ function RefereesInput({ table, onChanged }: { table: TableItem; onChanged: () =
           </button>
         ) : null}
       </div>
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        rows={2}
-        placeholder="一行一位裁判（選填）"
-        className={INPUT_CLASS}
-      />
+
+      {referees.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-cream-200 bg-cream-50 px-3 py-2 text-xs text-ink-muted">
+          尚未建立裁判清單。請先到 管理後台 → 裁判名單 新增。
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {referees.map((r) => {
+            const active = selected.includes(r.name);
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => toggle(r.name)}
+                className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                  active
+                    ? "border-ink bg-ink text-cream-50"
+                    : "border-cream-200 bg-white text-ink-soft hover:border-ink/30"
+                }`}
+              >
+                {r.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {adhoc.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-cream-200/60 pt-2">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+            非清單成員
+          </span>
+          {adhoc.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1 rounded-full border border-accent-butter/60 bg-accent-butter/30 px-2.5 py-0.5 text-xs text-ink"
+            >
+              {name}
+              <button
+                type="button"
+                onClick={() => toggle(name)}
+                aria-label={`移除 ${name}`}
+                className="text-ink-muted hover:text-ink"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       {err ? <div className="text-xs text-accent-coral">{err}</div> : null}
     </div>
   );

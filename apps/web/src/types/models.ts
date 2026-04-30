@@ -140,3 +140,12 @@ export type Participant = {
   checked_in: boolean;
   checked_in_at: string | null;
 };
+
+export type Referee = {
+  id: number;
+  tournament_id: number;
+  name: string;
+  level: string | null;
+  contact: string | null;
+  note: string | null;
+};

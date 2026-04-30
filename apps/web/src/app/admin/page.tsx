@@ -19,6 +19,11 @@ const adminLinks = [
     description: "新增 / 刪除球檯、開始與結束比賽、指派裁判。",
   },
   {
+    href: "/admin/referees",
+    title: "裁判名單",
+    description: "建立可被指派的裁判清單，球檯管理可直接點選。",
+  },
+  {
     href: "/admin/teams",
     title: "團賽名單",
     description: "新增、編輯男 / 女團隊伍與隊員資料。",

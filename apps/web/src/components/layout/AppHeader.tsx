@@ -68,6 +68,11 @@ const navItems: NavItem[] = [
         description: "開賽、結束、裁判指派。",
       },
       {
+        href: "/admin/referees",
+        label: "裁判名單",
+        description: "建立可被指派的裁判清單。",
+      },
+      {
         href: "/admin/teams",
         label: "團賽名單",
         description: "新增、編輯男 / 女團隊伍與隊員資料。",
