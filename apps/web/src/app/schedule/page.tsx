@@ -138,11 +138,30 @@ function ScheduleBody() {
       ) : null}
 
       {activeUrl ? (
-        <iframe
-          src={activeUrl}
-          title={`${active} PDF`}
-          className="h-[82vh] w-full rounded-2xl border border-cream-200 bg-white shadow-card"
-        />
+        <>
+          {/* Desktop: inline iframe — PDF displays + scrolls fine */}
+          <iframe
+            src={activeUrl}
+            title={`${active} PDF`}
+            className="hidden h-[82vh] w-full rounded-2xl border border-cream-200 bg-white shadow-card md:block"
+          />
+          {/* Mobile: iOS Safari iframes don't reliably scroll embedded PDFs;
+              link out to the system viewer instead. */}
+          <a
+            href={activeUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-2xl border border-cream-200 bg-white p-8 text-center shadow-card transition hover:bg-cream-50 md:hidden"
+          >
+            <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-muted">
+              {active}
+            </div>
+            <div className="mt-2 text-base font-medium text-ink">點此開啟 PDF</div>
+            <div className="mt-1 text-xs text-ink-muted">
+              手機版以系統 PDF 檢視器開啟，可雙指縮放與滑動翻頁
+            </div>
+          </a>
+        </>
       ) : (
         <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-12 text-center text-sm text-ink-muted">
           「{active}」尚未上傳 PDF。請至 管理後台 → 賽程 PDF 管理 上傳。
