@@ -185,7 +185,6 @@ SINGLES_MEN: list[tuple[str, str, str | None]] = [
     ("經濟二", "王伯睿", "B13303072"),
     ("電子所", "潘正諺", "R12943154"),
     ("語文中心一", "汪安龙", "L14S21150"),
-    ("測試用", "陳愷新", "R14944026"),
 ]
 
 SINGLES_WOMEN: list[tuple[str | None, str, str | None]] = [
