@@ -79,10 +79,11 @@ export type ScheduleCategory = (typeof SCHEDULE_CATEGORIES)[number];
 
 // Public-facing groups used by the schedule page and the nav menu. The admin
 // upload UI still works against the 6 individual SCHEDULE_CATEGORIES above.
+// 男女單 / 男女團 同個 PDF，所以群組裡只放一個 category（sub-tabs 自動消失）。
 export const SCHEDULE_GROUPS = [
   { key: "timetable", label: "時程表", categories: ["時間表"] },
-  { key: "singles", label: "公開男女單", categories: ["公開男單", "公開女單"] },
-  { key: "teams", label: "公開男女團", categories: ["公開男團", "公開女團"] },
+  { key: "singles", label: "公開男女單", categories: ["公開男單"] },
+  { key: "teams", label: "公開男女團", categories: ["公開男團"] },
   { key: "doubles", label: "歡樂雙打", categories: ["歡樂雙打"] },
 ] as const satisfies ReadonlyArray<{
   key: string;
