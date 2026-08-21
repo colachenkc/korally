@@ -8,6 +8,7 @@ const config: Config = {
       fontFamily: {
         sans: [
           "var(--font-instrument-sans)",
+          "var(--font-noto-tc)",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",

@@ -7,6 +7,8 @@ import {
   BarChart3,
   Calendar,
   FileText,
+  IdCard,
+  Info,
   LayoutGrid,
   ListChecks,
   Megaphone,
@@ -79,6 +81,12 @@ const STATIC_ADMIN_CHILDREN: NavChild[] = [
     label: "團賽名單",
     description: "新增、編輯男 / 女團隊伍與隊員資料。",
     icon: Users2,
+  },
+  {
+    href: "/admin/participants",
+    label: "個人參賽名單",
+    description: "新增、編輯單打 / 雙打選手。",
+    icon: User,
   },
   {
     href: "/admin/groups",
@@ -160,6 +168,28 @@ function buildNavItems(stages: Stage[]): NavItem[] {
       ],
     },
     { href: "/admin", label: "管理後台", sections: [{ items: STATIC_ADMIN_CHILDREN }] },
+    {
+      href: "/#about-us",
+      label: "關於我們",
+      sections: [
+        {
+          items: [
+            {
+              href: "/#about-us",
+              label: "About us",
+              description: "KoRally 系統介紹與使用場景。",
+              icon: Info,
+            },
+            {
+              href: "/#our-team",
+              label: "Our team",
+              description: "開發者資訊。",
+              icon: IdCard,
+            },
+          ],
+        },
+      ],
+    },
   ];
 }
 
@@ -231,7 +261,7 @@ export function AppHeader() {
               <ul className="flex items-center gap-5 text-base">
                 {navItems.map((item) => (
                   <DesktopNavItem
-                    key={item.href}
+                    key={item.label}
                     item={item}
                     active={isItemActive(pathname, item)}
                     hovered={hovered}
@@ -396,8 +426,8 @@ function DesktopNavItem({
   hovered: string | null;
   onHover: (href: string | null) => void;
 }) {
-  const isHovered = hovered === item.href;
-  const someoneElseHovered = hovered !== null && hovered !== item.href;
+  const isHovered = hovered === item.label;
+  const someoneElseHovered = hovered !== null && hovered !== item.label;
   const sections = item.sections ?? [];
   const hasChildren = sections.some((s) => s.items.length > 0);
 
@@ -410,7 +440,7 @@ function DesktopNavItem({
         : "text-ink-soft";
 
   return (
-    <li className="relative" onMouseEnter={() => onHover(item.href)}>
+    <li className="relative" onMouseEnter={() => onHover(item.label)}>
       <Link
         href={item.href}
         className={`flex items-center gap-1.5 px-2 py-1.5 font-medium transition-colors ${textClass}`}
@@ -511,15 +541,10 @@ function CloseIcon() {
 }
 
 function RoleBadge({ role }: { role: Role }) {
-  const tone =
-    role === "admin"
-      ? "bg-accent-butter/50 text-ink"
-      : "bg-cream-100 text-ink-soft";
+  const tone = role === "admin" ? "text-ink" : "text-ink-soft";
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tone}`}
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${tone}`}>
+      <span className="h-2 w-2 rounded-full bg-accent-sky" />
       {ROLE_LABEL[role]}
     </span>
   );

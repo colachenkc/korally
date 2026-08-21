@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarDays, ChevronDown, MapPin } from "lucide-react";
+import { CalendarDays, GraduationCap, MapPin } from "lucide-react";
 
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
+import { ScrollReveal } from "@/components/common/ScrollReveal";
 import { HomeFooter } from "@/components/layout/HomeFooter";
+import { GradientText } from "@/components/ui/gradient-text";
 import { API_V1 } from "@/lib/api-client";
 import type { Tournament } from "@/types/models";
 
@@ -33,7 +35,7 @@ export default async function HomePage() {
     <div className="flex min-h-[calc(100vh-160px)] flex-col">
       {tournament ? (
         <section className="mx-auto w-full max-w-4xl pt-6 text-center md:pt-16">
-          <h1 className="font-sans text-4xl font-black leading-[1.1] tracking-tight text-ink sm:text-5xl md:text-7xl lg:text-[5.5rem]">
+          <h1 className="font-sans text-4xl font-bold leading-[1.1] tracking-tight text-ink sm:text-5xl md:text-7xl lg:text-[5.5rem]">
             {(() => {
               const parts = splitTitle(tournament.name);
               if (!parts) return tournament.name;
@@ -48,16 +50,16 @@ export default async function HomePage() {
             })()}
           </h1>
 
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-2 md:mt-10 md:gap-3">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-ink-soft md:mt-10 md:gap-x-8">
             {tournament.venue ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-cream-300 bg-cream-100 px-4 py-1.5 text-sm text-ink-soft md:text-base">
-                <MapPin className="h-4 w-4 text-brand" strokeWidth={2.25} />
+              <span className="inline-flex items-center gap-2 text-base md:text-lg">
+                <MapPin className="h-4 w-4 text-brand md:h-5 md:w-5" strokeWidth={2.25} />
                 {tournament.venue}
               </span>
             ) : null}
             {tournament.start_date ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-cream-300 bg-cream-100 px-4 py-1.5 font-mono text-sm text-ink-soft md:text-base">
-                <CalendarDays className="h-4 w-4 text-brand" strokeWidth={2.25} />
+              <span className="inline-flex items-center gap-2 font-mono text-base md:text-lg">
+                <CalendarDays className="h-4 w-4 text-brand md:h-5 md:w-5" strokeWidth={2.25} />
                 {tournament.start_date}
                 {tournament.end_date && tournament.end_date !== tournament.start_date
                   ? ` → ${tournament.end_date}`
@@ -81,13 +83,6 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <a
-            href="#site-footer"
-            aria-label="向下捲動"
-            className="group mx-auto mt-12 inline-flex h-10 w-10 items-center justify-center rounded-full border border-cream-300 text-ink-muted transition hover:border-brand hover:text-brand md:mt-16"
-          >
-            <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
-          </a>
         </section>
       ) : (
         <section className="mx-auto w-full max-w-2xl rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-4 text-sm text-accent-coral">
@@ -105,8 +100,93 @@ export default async function HomePage() {
         <Marquee />
       </div>
 
+      <AboutUsSection />
+      <ProfileSection />
+
       <HomeFooter />
     </div>
+  );
+}
+
+function AboutUsSection() {
+  return (
+    <section
+      id="about-us"
+      className="mx-auto flex min-h-[75vh] w-full max-w-3xl flex-col justify-center py-10 md:py-14"
+    >
+      <ScrollReveal>
+        <h2 className="text-center text-3xl font-bold tracking-tight text-ink md:text-5xl">
+          About <span className="text-brand">KoRally</span>
+        </h2>
+      </ScrollReveal>
+      <ScrollReveal delayMs={200}>
+        <div className="mt-8 space-y-4 text-base leading-relaxed text-ink-soft md:mt-12 md:text-lg">
+          <p>
+            KoRally 為賽事現場設計的即時監控與名單管理系統。目標是讓大會工作人員能專注在辦賽上、觀眾能透過手機直接觀看比賽進度，減少現場印刷紙張與人力查表。
+          </p>
+          <p>
+            系統支援：即時球檯監控、參賽名單與掃描報到、賽程 PDF
+            分區發布、單場與團體對抗賽果登記、循環賽即時排名。所有資料集中在後台一次維護，前台頁面自動同步。
+          </p>
+        </div>
+      </ScrollReveal>
+    </section>
+  );
+}
+
+function ProfileSection() {
+  return (
+    <section
+      id="our-team"
+      className="mx-auto flex min-h-[75vh] w-full max-w-3xl flex-col justify-center py-10 md:py-14"
+    >
+      <ScrollReveal>
+        <h2 className="text-center text-3xl font-bold tracking-tight text-ink md:text-5xl">
+          Our team
+        </h2>
+      </ScrollReveal>
+
+      <ScrollReveal delayMs={200}>
+      <article className="mt-10 rounded-2xl border border-cream-200 bg-cream-100 p-6 shadow-card md:mt-14 md:p-8">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cream-300 text-lg font-semibold text-ink">
+            KC
+          </div>
+          <div className="min-w-0">
+            <div className="text-2xl font-semibold text-ink md:text-3xl">
+              Kai-Hsin (Kevin) Chen
+            </div>
+            <div className="mt-0.5 text-sm text-brand md:text-base">
+              Designer & Engineer
+            </div>
+          </div>
+        </div>
+
+        <ul className="mt-6 space-y-3 border-t border-cream-200 pt-6">
+          <li className="flex items-start gap-3">
+            <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-brand" strokeWidth={2} />
+            <div>
+              <div className="text-sm font-semibold text-ink">
+                MS in Computer Science and Information Engineering
+              </div>
+              <div className="text-sm text-ink-muted">
+                National Taiwan University · Graduate Institute of Networking and Multimedia
+              </div>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-brand" strokeWidth={2} />
+            <div>
+              <div className="text-sm font-semibold text-ink">BS in Physics</div>
+              <div className="text-sm text-ink-muted">
+                National Taiwan University · Department of Physics
+              </div>
+            </div>
+          </li>
+        </ul>
+      </article>
+      </ScrollReveal>
+    </section>
   );
 }
 

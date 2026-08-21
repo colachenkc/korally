@@ -67,7 +67,7 @@ export function HomeFooter() {
           <h3 className="text-sm font-semibold text-ink">Legal</h3>
           <ul className="mt-4 space-y-2.5 text-sm text-ink-muted">
             <li>
-              <Link href="/about" className="hover:text-brand">
+              <Link href="/#about-us" className="hover:text-brand">
                 About us
               </Link>
             </li>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Geist_Mono, Instrument_Sans } from "next/font/google";
+import { Fraunces, Geist_Mono, Instrument_Sans, Noto_Sans_TC } from "next/font/google";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { HomeBackground } from "@/components/layout/HomeBackground";
@@ -9,6 +9,15 @@ const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   variable: "--font-instrument-sans",
   display: "swap",
+});
+
+// CJK font — Google serves it split by unicode-range so browsers only fetch
+// the glyphs actually rendered on the page.
+const notoSansTc = Noto_Sans_TC({
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-noto-tc",
+  display: "swap",
+  preload: false,
 });
 
 const fraunces = Fraunces({
@@ -34,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="zh-Hant"
-      className={`${instrumentSans.variable} ${fraunces.variable} ${geistMono.variable}`}
+      className={`${instrumentSans.variable} ${notoSansTc.variable} ${fraunces.variable} ${geistMono.variable}`}
     >
       <body className="min-h-screen bg-cream-50 font-sans text-ink antialiased">
         <HomeBackground />
