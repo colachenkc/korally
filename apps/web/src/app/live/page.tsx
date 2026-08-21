@@ -5,13 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
-import type { CallSide, MainDesk, TableItem } from "@/types/models";
+import type { CallSide, TableItem } from "@/types/models";
 
 const REFRESH_MS = 5000;
 
 export default function LivePage() {
   const [tables, setTables] = useState<TableItem[]>([]);
-  const [mainDesks, setMainDesks] = useState<MainDesk[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [callTarget, setCallTarget] = useState<TableItem | null>(null);
@@ -23,12 +22,8 @@ export default function LivePage() {
 
   const load = useCallback(async () => {
     try {
-      const [t, md] = await Promise.all([
-        apiGet<TableItem[]>("/tables"),
-        apiGet<MainDesk[]>("/main-desk"),
-      ]);
+      const t = await apiGet<TableItem[]>("/tables");
       setTables(t);
-      setMainDesks(md);
       setLastUpdated(new Date());
       setError(null);
     } catch (e) {
@@ -186,14 +181,6 @@ export default function LivePage() {
         </>
       )}
 
-      {mainDesks.length > 0 ? (
-        <div className="flex justify-center pt-2">
-          {mainDesks.map((md) => (
-            <MainDeskCard key={md.id} desk={md} />
-          ))}
-        </div>
-      ) : null}
-
       {callTarget ? (
         <CallModal
           table={callTarget}
@@ -272,40 +259,6 @@ function SummaryChip({
     <div className={`flex items-center gap-2 rounded-full px-3 py-1 ${toneClass}`}>
       <span className="text-xs">{label}</span>
       <span className="font-mono text-sm font-semibold">{value}</span>
-    </div>
-  );
-}
-
-function MainDeskCard({ desk }: { desk: MainDesk }) {
-  const members = desk.members_text?.trim();
-  return (
-    <div className="w-full max-w-xs rounded-2xl border border-accent-butter/60 bg-accent-butter/25 p-4 shadow-card">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-muted">
-            Main desk
-          </div>
-          <div className="mt-0.5 truncate text-base font-semibold text-ink">{desk.name}</div>
-          {desk.location ? (
-            <div className="truncate text-xs text-ink-muted">{desk.location}</div>
-          ) : null}
-        </div>
-        {desk.status_text ? (
-          <div className="shrink-0 rounded-full bg-cream-100/70 px-2.5 py-1 text-xs font-medium text-ink">
-            {desk.status_text}
-          </div>
-        ) : null}
-      </div>
-      {members ? (
-        <div className="mt-3 border-t border-accent-butter/70 pt-3">
-          <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-muted">
-            目前輪班
-          </div>
-          <pre className="whitespace-pre-wrap font-sans text-base font-medium leading-relaxed text-ink">
-            {members}
-          </pre>
-        </div>
-      ) : null}
     </div>
   );
 }
