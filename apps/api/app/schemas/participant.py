@@ -18,7 +18,16 @@ class ParticipantBase(BaseModel):
     stage_id: int | None = None
 
 
-class ParticipantCreate(ParticipantBase):
+class ParticipantCreate(BaseModel):
+    # Category is optional here — the endpoint derives it from stage_id (or the
+    # caller explicitly supplies it, e.g. seed scripts).
+    category: ParticipantCategory | None = None
+    name: str = Field(min_length=1, max_length=120)
+    team: str | None = None
+    student_id: str | None = None
+    pair_no: int | None = None
+    seed: int | None = None
+    stage_id: int | None = None
     tournament_id: int | None = None
 
 

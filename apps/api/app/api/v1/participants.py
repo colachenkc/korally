@@ -6,12 +6,32 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.core.auth import require_admin, require_referee_or_admin
 from app.models.participant import Participant
+from app.models.stage import Stage
 from app.models.tournament import Tournament
 from app.schemas.participant import ParticipantCreate, ParticipantRead, ParticipantUpdate
 
 router = APIRouter(prefix="/participants", tags=["participants"])
 
 _VALID_CATEGORIES = ("men_singles", "women_singles", "doubles")
+
+# Reverse mapping so admins picking a stage auto-fill the legacy `category`.
+_STAGE_TO_CATEGORY = {
+    "公開男單": "men_singles",
+    "公開女單": "women_singles",
+    "歡樂雙打": "doubles",
+}
+
+
+def _stage_to_category(name: str) -> str | None:
+    if name in _STAGE_TO_CATEGORY:
+        return _STAGE_TO_CATEGORY[name]
+    if "雙" in name:
+        return "doubles"
+    if "男" in name:
+        return "men_singles"
+    if "女" in name:
+        return "women_singles"
+    return None
 
 
 def _resolve_tournament_id(db: Session, tournament_id: int | None) -> int:
@@ -55,9 +75,27 @@ def list_participants(
 )
 def create_participant(payload: ParticipantCreate, db: Session = Depends(get_db)) -> Participant:
     tournament_id = _resolve_tournament_id(db, payload.tournament_id)
+
+    stage_id = payload.stage_id
+    category = payload.category
+    if stage_id is not None:
+        stage = db.get(Stage, stage_id)
+        if not stage:
+            raise HTTPException(status_code=400, detail="stage_id refers to unknown stage")
+        derived = _stage_to_category(stage.name)
+        if derived is not None:
+            category = derived  # stage wins over payload for legacy column
+
+    if category not in _VALID_CATEGORIES:
+        raise HTTPException(
+            status_code=400,
+            detail="category is required (or supply a stage_id that maps to a known category)",
+        )
+
     p = Participant(
         tournament_id=tournament_id,
-        category=payload.category,
+        category=category,
+        stage_id=stage_id,
         name=payload.name.strip(),
         team=(payload.team or "").strip() or None,
         student_id=(payload.student_id or "").strip() or None,
@@ -86,6 +124,14 @@ def update_participant(
     for f in ("name", "team", "student_id"):
         if f in data and isinstance(data[f], str):
             data[f] = data[f].strip() or (None if f != "name" else p.name)
+    # If admin swaps stage, keep legacy `category` aligned.
+    if "stage_id" in data and data["stage_id"] is not None:
+        stage = db.get(Stage, data["stage_id"])
+        if not stage:
+            raise HTTPException(status_code=400, detail="stage_id refers to unknown stage")
+        derived = _stage_to_category(stage.name)
+        if derived is not None:
+            data["category"] = derived
     for field, value in data.items():
         setattr(p, field, value)
     db.commit()

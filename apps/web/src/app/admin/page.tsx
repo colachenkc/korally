@@ -29,6 +29,11 @@ const adminLinks = [
     description: "新增、編輯男 / 女團隊伍與隊員資料。",
   },
   {
+    href: "/admin/participants",
+    title: "個人參賽名單",
+    description: "新增、編輯單打 / 雙打選手，含學號、種子順位、配對號。",
+  },
+  {
     href: "/admin/groups",
     title: "循環賽分組",
     description: "建立個人 / 團體循環賽分組，之後在賽果登記與排名表使用。",
