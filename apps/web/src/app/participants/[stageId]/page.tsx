@@ -5,30 +5,21 @@ import { use, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { apiDelete, apiGet, apiPost } from "@/lib/api-client";
-import {
-  PARTICIPANT_CATEGORY_LABEL,
-  type Participant,
-  type ParticipantCategory,
-} from "@/types/models";
+import type { Participant, Stage } from "@/types/models";
 
-const VALID: ParticipantCategory[] = ["men_singles", "women_singles", "doubles"];
-
-function isCategory(value: string): value is ParticipantCategory {
-  return (VALID as readonly string[]).includes(value);
-}
-
-export default function ParticipantsByCategoryPage({
+export default function ParticipantsByStagePage({
   params,
 }: {
-  params: Promise<{ category: string }>;
+  params: Promise<{ stageId: string }>;
 }) {
-  const { category } = use(params);
-  if (!isCategory(category)) {
-    notFound();
-  }
+  const { stageId } = use(params);
+  const parsed = Number(stageId);
+  if (!Number.isFinite(parsed)) notFound();
 
+  const [stage, setStage] = useState<Stage | null>(null);
   const [people, setPeople] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
   const { status: authStatus, role } = useAuth();
   const canCheckIn = authStatus === "authenticated";
@@ -36,13 +27,20 @@ export default function ParticipantsByCategoryPage({
 
   const load = useCallback(async () => {
     try {
-      const data = await apiGet<Participant[]>(`/participants?category=${category}`);
-      setPeople(data);
+      const [stages, ps] = await Promise.all([
+        apiGet<Stage[]>("/stages"),
+        apiGet<Participant[]>(`/participants?stage_id=${parsed}`),
+      ]);
+      const s = stages.find((x) => x.id === parsed) ?? null;
+      setStage(s);
+      setPeople(ps);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "讀取失敗");
+    } finally {
+      setLoading(false);
     }
-  }, [category]);
+  }, [parsed]);
 
   useEffect(() => {
     void load();
@@ -78,9 +76,9 @@ export default function ParticipantsByCategoryPage({
     return { total, checked };
   }, [people]);
 
-  const isDoubles = category === "doubles";
+  // Detect doubles-style stage by whether any participant has a pair_no.
+  const isDoubles = useMemo(() => people.some((p) => p.pair_no != null), [people]);
 
-  // For doubles, group rows by pair_no into pairs of 2.
   const pairs = useMemo(() => {
     if (!isDoubles) return null;
     const groups = new Map<number, Participant[]>();
@@ -89,7 +87,6 @@ export default function ParticipantsByCategoryPage({
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(p);
     }
-    // Sort by pair_no asc; -1 (unpaired) at end.
     return Array.from(groups.entries())
       .sort(([a], [b]) => (a < 0 ? 1 : b < 0 ? -1 : a - b))
       .map(([pair_no, members]) => ({ pair_no, members }));
@@ -98,11 +95,8 @@ export default function ParticipantsByCategoryPage({
   return (
     <div className="space-y-5">
       <header>
-        <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-          Participants · {category.replace("_", " ").toUpperCase()}
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">
-          {PARTICIPANT_CATEGORY_LABEL[category]}參賽名單
+          {stage ? `${stage.name}參賽名單` : "參賽名單"}
         </h1>
       </header>
 
@@ -118,9 +112,13 @@ export default function ParticipantsByCategoryPage({
         </div>
       ) : null}
 
-      {people.length === 0 && !error ? (
-        <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-12 text-center text-sm text-ink-muted">
-          此組別尚無參賽名單。
+      {loading ? (
+        <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100 p-12 text-center text-sm text-ink-muted">
+          讀取中⋯
+        </div>
+      ) : people.length === 0 && !error ? (
+        <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100 p-12 text-center text-sm text-ink-muted">
+          此大組尚無參賽名單。
         </div>
       ) : isDoubles ? (
         <div className="space-y-2">
@@ -134,7 +132,7 @@ export default function ParticipantsByCategoryPage({
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-cream-200 bg-white shadow-card">
+        <div className="overflow-hidden rounded-2xl border border-cream-200 bg-cream-100 shadow-card">
           <ul className="divide-y divide-cream-200/60">
             {people.map((p) => (
               <PersonRow
@@ -160,9 +158,7 @@ function Chip({
   tone?: "cream" | "green";
 }) {
   const toneClass =
-    tone === "green"
-      ? "bg-accent-sky/10 text-accent-sky"
-      : "bg-cream-100 text-ink-soft";
+    tone === "green" ? "bg-accent-sky/15 text-accent-sky" : "bg-cream-200 text-ink-soft";
   return (
     <div className={`flex items-center gap-2 rounded-full px-3 py-1 ${toneClass}`}>
       <span className="text-xs">{label}</span>
@@ -201,9 +197,9 @@ function PairRow({
   actions: RowActions;
 }) {
   return (
-    <div className="rounded-2xl border border-cream-200 bg-white p-4 shadow-card">
+    <div className="rounded-2xl border border-cream-200 bg-cream-100 p-4 shadow-card">
       <div className="mb-2 flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-muted">
+        <span className="text-[10px] uppercase tracking-[0.22em] text-ink-muted">
           {pairNo > 0 ? `Pair ${pairNo}` : "未配對"}
         </span>
       </div>
@@ -232,9 +228,7 @@ function PersonMeta({
   if (!team && !studentId) return null;
   return (
     <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-      {team ? (
-        <span className="text-xs text-ink-muted md:text-sm">{team}</span>
-      ) : null}
+      {team ? <span className="text-xs text-ink-muted md:text-sm">{team}</span> : null}
       {studentId ? (
         <span className="font-mono text-[11px] text-ink-faint md:text-xs">{studentId}</span>
       ) : null}
@@ -242,13 +236,7 @@ function PersonMeta({
   );
 }
 
-function CheckInControl({
-  person,
-  actions,
-}: {
-  person: Participant;
-  actions: RowActions;
-}) {
+function CheckInControl({ person, actions }: { person: Participant; actions: RowActions }) {
   const busy = actions.busyId === person.id;
   const checked = person.checked_in;
   const clickable = checked ? actions.canUndo : actions.canCheckIn;
@@ -256,7 +244,7 @@ function CheckInControl({
   const checkedClass =
     "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent-sky/15 px-3 py-1 text-xs font-medium text-accent-sky";
   const uncheckedClass =
-    "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cream-100 px-3 py-1 text-xs font-medium text-ink-faint";
+    "inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cream-200 px-3 py-1 text-xs font-medium text-ink-faint";
 
   const inner = checked ? (
     <>

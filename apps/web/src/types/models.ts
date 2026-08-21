@@ -2,20 +2,67 @@ export type MatchStatus = "scheduled" | "preparing" | "in_progress" | "finished"
 
 export type TableStatus = "idle" | "preparing" | "in_progress" | "delayed" | "finished";
 
+export type MatchKind = "singles" | "doubles" | "team_tie";
+
+export const MATCH_KIND_LABEL: Record<MatchKind, string> = {
+  singles: "個人",
+  doubles: "雙打",
+  team_tie: "團體",
+};
+
 export type Match = {
   id: number;
   tournament_id: number;
   table_id: number | null;
+  group_id: number | null;
   match_no: string;
   category_label: string | null;
   status: MatchStatus;
+  match_kind: MatchKind;
   player_a_name_manual: string | null;
   player_b_name_manual: string | null;
   winner_name_manual: string | null;
+  team_a_id: number | null;
+  team_b_id: number | null;
+  winner_team_id: number | null;
   score_summary: string | null;
   actual_start_time: string | null;
   actual_end_time: string | null;
   remarks: string | null;
+};
+
+export type Group = {
+  id: number;
+  tournament_id: number;
+  name: string;
+  display_order: number;
+  stage_id: number | null;
+};
+
+export type Stage = {
+  id: number;
+  tournament_id: number;
+  name: string;
+  stage_type: string;
+  sort_order: number;
+  description: string | null;
+};
+
+export type StandingRow = {
+  entity_kind: "participant" | "team";
+  entity_id: number | null;
+  name: string;
+  wins: number;
+  losses: number;
+  matches_played: number;
+  win_rate: number;
+};
+
+export type Standings = {
+  group_id: number;
+  group_name: string;
+  match_kind: MatchKind | "mixed";
+  rows: StandingRow[];
 };
 
 export type CallSide = "A" | "B" | "BOTH";
@@ -97,6 +144,7 @@ export type ScheduleDoc = {
   id: number;
   tournament_id: number;
   title: string;
+  stage_id: number | null;
   pdf_url: string;
   effective_date: string | null;
   note: string | null;
@@ -115,6 +163,7 @@ export type Team = {
   id: number;
   tournament_id: number;
   division: TeamDivision;
+  stage_id: number | null;
   name: string;
   department: string | null;
   members_text: string | null;
@@ -133,6 +182,7 @@ export type Participant = {
   id: number;
   tournament_id: number;
   category: ParticipantCategory;
+  stage_id: number | null;
   name: string;
   team: string | null;
   student_id: string | null;

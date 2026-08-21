@@ -11,7 +11,9 @@ class ScheduleAnnouncement(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tournament_id: Mapped[int] = mapped_column(ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    # DEPRECATED (Phase 1 dual-write): kept for backward compat, prefer stage_id.
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    stage_id: Mapped[int | None] = mapped_column(ForeignKey("stages.id", ondelete="SET NULL"))
     pdf_url: Mapped[str] = mapped_column(String(500), nullable=False)
     effective_date: Mapped[date | None] = mapped_column(Date)
     note: Mapped[str | None] = mapped_column(Text)

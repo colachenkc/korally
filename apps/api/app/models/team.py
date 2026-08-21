@@ -10,7 +10,9 @@ class Team(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     tournament_id: Mapped[int] = mapped_column(ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=False)
+    # DEPRECATED (Phase 1 dual-write): kept for backward compat, prefer stage_id.
     division: Mapped[str] = mapped_column(String(8), nullable=False)  # "men" | "women"
+    stage_id: Mapped[int | None] = mapped_column(ForeignKey("stages.id", ondelete="SET NULL"))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     department: Mapped[str | None] = mapped_column(String(120))
     members_text: Mapped[str | None] = mapped_column(Text)

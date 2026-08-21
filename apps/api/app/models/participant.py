@@ -16,7 +16,9 @@ class Participant(Base, TimestampMixin):
     team: Mapped[str | None] = mapped_column(String(120))
     student_id: Mapped[str | None] = mapped_column(String(50))
     # category values used by the public roster page: "men_singles" | "women_singles" | "doubles"
+    # DEPRECATED (Phase 1 dual-write): kept for backward compat, prefer stage_id.
     category: Mapped[str | None] = mapped_column(String(80))
+    stage_id: Mapped[int | None] = mapped_column(ForeignKey("stages.id", ondelete="SET NULL"))
     seed: Mapped[int | None] = mapped_column(Integer)
     group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id", ondelete="SET NULL"))
     # Doubles partner grouping: two participants with the same pair_no form a pair.

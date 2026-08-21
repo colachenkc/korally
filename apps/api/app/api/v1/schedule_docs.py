@@ -8,6 +8,7 @@ from app.api.deps import get_db
 from app.core.auth import require_admin
 from app.core.config import settings
 from app.models.announcement import ScheduleAnnouncement
+from app.models.stage import Stage
 from app.models.tournament import Tournament
 from app.schemas.announcement import ScheduleAnnouncementRead
 
@@ -58,21 +59,43 @@ def list_schedule_docs(
     dependencies=[Depends(require_admin)],
 )
 async def upload_schedule_doc(
-    title: str = Form(...),
     file: UploadFile = File(...),
+    title: str | None = Form(default=None),
+    stage_id: int | None = Form(default=None),
     tournament_id: int | None = Form(default=None),
     db: Session = Depends(get_db),
 ) -> ScheduleAnnouncement:
-    if title not in ALLOWED_CATEGORIES:
-        raise HTTPException(status_code=400, detail=f"title must be one of {sorted(ALLOWED_CATEGORIES)}")
+    tid = _resolve_tournament_id(db, tournament_id)
+
+    resolved_stage: Stage | None = None
+    if stage_id is not None:
+        resolved_stage = db.get(Stage, stage_id)
+        if not resolved_stage:
+            raise HTTPException(status_code=400, detail="stage_id refers to unknown stage")
+        # Stage picker is the source of truth for the title when provided.
+        title = resolved_stage.name
+    elif title:
+        # Legacy path: accept "時間表" and the 5 fixed categories.
+        if title not in ALLOWED_CATEGORIES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"title must be one of {sorted(ALLOWED_CATEGORIES)} or supply stage_id",
+            )
+        # Best-effort: if a Stage with this exact name exists, link it.
+        resolved_stage = (
+            db.query(Stage)
+            .filter(Stage.tournament_id == tid, Stage.name == title)
+            .first()
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Provide title or stage_id")
+
     if file.content_type not in ("application/pdf", "application/x-pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 
     data = await file.read()
     if len(data) > MAX_PDF_BYTES:
         raise HTTPException(status_code=400, detail="File too large (max 20 MB)")
-
-    tid = _resolve_tournament_id(db, tournament_id)
 
     # Replace any existing doc with the same title for this tournament
     existing = (
@@ -95,6 +118,7 @@ async def upload_schedule_doc(
     doc = ScheduleAnnouncement(
         tournament_id=tid,
         title=title,
+        stage_id=resolved_stage.id if resolved_stage else None,
         pdf_url=f"/uploads/schedule/{file_id}",
     )
     db.add(doc)

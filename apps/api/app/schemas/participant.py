@@ -15,6 +15,7 @@ class ParticipantBase(BaseModel):
     student_id: str | None = None
     pair_no: int | None = None
     seed: int | None = None
+    stage_id: int | None = None
 
 
 class ParticipantCreate(ParticipantBase):
@@ -28,6 +29,7 @@ class ParticipantUpdate(BaseModel):
     student_id: str | None = None
     pair_no: int | None = None
     seed: int | None = None
+    stage_id: int | None = None
 
 
 class ParticipantRead(ParticipantBase):

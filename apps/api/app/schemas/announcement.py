@@ -9,6 +9,7 @@ class ScheduleAnnouncementRead(BaseModel):
     id: int
     tournament_id: int
     title: str
+    stage_id: int | None = None
     pdf_url: str
     effective_date: date | None = None
     note: str | None = None

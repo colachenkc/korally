@@ -3,11 +3,13 @@ from fastapi import APIRouter
 from app.api.v1 import (
     admin,
     auth,
+    groups,
     main_desk,
     matches,
     participants,
     referees,
     schedule_docs,
+    stages,
     tables,
     teams,
     tournaments,
@@ -18,6 +20,8 @@ api_router.include_router(auth.router)
 api_router.include_router(tournaments.router)
 api_router.include_router(tables.router)
 api_router.include_router(matches.router)
+api_router.include_router(groups.router)
+api_router.include_router(stages.router)
 api_router.include_router(main_desk.router)
 api_router.include_router(schedule_docs.router)
 api_router.include_router(teams.router)

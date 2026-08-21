@@ -11,6 +11,7 @@ class TeamBase(BaseModel):
     department: str | None = None
     members_text: str | None = None
     display_order: int = 0
+    stage_id: int | None = None
 
 
 class TeamCreate(TeamBase):
@@ -23,6 +24,7 @@ class TeamUpdate(BaseModel):
     department: str | None = None
     members_text: str | None = None
     display_order: int | None = None
+    stage_id: int | None = None
 
 
 class TeamRead(TeamBase):
