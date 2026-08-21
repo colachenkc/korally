@@ -7,6 +7,7 @@ from app.api.deps import get_db
 from app.core.auth import require_admin, require_referee_or_admin
 from app.models.match import Match
 from app.models.table import Table
+from app.models.team import Team
 from app.models.tournament import Tournament
 from app.schemas.match import MatchFinish, MatchRead, MatchStart
 from app.schemas.table import TableCallCreate, TableCreate, TableRead, TableUpdate, TableWithCurrentMatch
@@ -89,15 +90,43 @@ def start_match(table_id: int, payload: MatchStart, db: Session = Depends(get_db
     if table.current_match_id:
         raise HTTPException(status_code=400, detail="Table already has an ongoing match")
 
+    kind = payload.match_kind or "singles"
+    if kind not in ("singles", "doubles", "team_tie"):
+        raise HTTPException(status_code=400, detail=f"Unknown match_kind: {kind}")
+
+    team_a_id = payload.team_a_id
+    team_b_id = payload.team_b_id
+    player_a = payload.player_a_name
+    player_b = payload.player_b_name
+
+    if kind == "team_tie":
+        if not team_a_id or not team_b_id:
+            raise HTTPException(status_code=400, detail="team_tie requires team_a_id and team_b_id")
+        team_a = db.get(Team, team_a_id)
+        team_b = db.get(Team, team_b_id)
+        if not team_a or not team_b:
+            raise HTTPException(status_code=400, detail="team_a_id or team_b_id refers to unknown team")
+        # Mirror team names into player_*_name_manual so legacy consumers (call modal,
+        # existing live layouts) show something sensible without needing a Team lookup.
+        player_a = team_a.name
+        player_b = team_b.name
+    else:
+        if not player_a or not player_b:
+            raise HTTPException(status_code=400, detail="player_a_name and player_b_name required")
+
     next_no = (db.query(Match).filter(Match.tournament_id == table.tournament_id).count()) + 1
     match = Match(
         tournament_id=table.tournament_id,
         table_id=table.id,
         match_no=f"M{next_no:03d}",
+        match_kind=kind,
         category_label=payload.category_label,
+        group_id=payload.group_id,
         status="in_progress",
-        player_a_name_manual=payload.player_a_name,
-        player_b_name_manual=payload.player_b_name,
+        player_a_name_manual=player_a,
+        player_b_name_manual=player_b,
+        team_a_id=team_a_id if kind == "team_tie" else None,
+        team_b_id=team_b_id if kind == "team_tie" else None,
         actual_start_time=datetime.now(timezone.utc),
         remarks=payload.remarks,
         source_type="manual_entry",
@@ -133,9 +162,16 @@ def finish_match(table_id: int, payload: MatchFinish, db: Session = Depends(get_
 
     match.status = "finished"
     match.actual_end_time = datetime.now(timezone.utc)
-    match.winner_name_manual = (
-        match.player_a_name_manual if payload.winner_side == "A" else match.player_b_name_manual
-    )
+    if match.match_kind == "team_tie":
+        match.winner_team_id = match.team_a_id if payload.winner_side == "A" else match.team_b_id
+        # Keep winner_name_manual as a display snapshot (was mirrored at start_match).
+        match.winner_name_manual = (
+            match.player_a_name_manual if payload.winner_side == "A" else match.player_b_name_manual
+        )
+    else:
+        match.winner_name_manual = (
+            match.player_a_name_manual if payload.winner_side == "A" else match.player_b_name_manual
+        )
     match.score_summary = payload.score_summary
 
     table.current_match_id = None

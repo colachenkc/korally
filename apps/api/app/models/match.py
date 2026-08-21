@@ -31,10 +31,18 @@ class Match(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(32), default="scheduled", nullable=False)
     # scheduled | preparing | in_progress | finished | delayed | cancelled
 
+    # singles | doubles | team_tie
+    match_kind: Mapped[str] = mapped_column(String(16), default="singles", nullable=False)
+
     player_a_id: Mapped[int | None] = mapped_column(ForeignKey("participants.id", ondelete="SET NULL"))
     player_b_id: Mapped[int | None] = mapped_column(ForeignKey("participants.id", ondelete="SET NULL"))
     player_a_name_manual: Mapped[str | None] = mapped_column(String(120))
     player_b_name_manual: Mapped[str | None] = mapped_column(String(120))
+
+    # Only set when match_kind == "team_tie"
+    team_a_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"))
+    team_b_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"))
+    winner_team_id: Mapped[int | None] = mapped_column(ForeignKey("teams.id", ondelete="SET NULL"))
 
     best_of_sets: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
     sets_to_win: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
