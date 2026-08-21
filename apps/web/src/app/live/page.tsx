@@ -117,9 +117,6 @@ export default function LivePage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-            Live
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-ink">球檯即時監控</h1>
         </div>
         <div className="font-mono text-[11px] text-ink-muted">
@@ -149,7 +146,7 @@ export default function LivePage() {
       ) : null}
 
       {tables.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-12 text-center text-sm text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100 p-12 text-center text-sm text-ink-muted">
           尚未建立任何球檯。請至 管理後台 → 球檯管理 新增。
         </div>
       ) : (
@@ -232,7 +229,7 @@ function CallBanner({
         {tables.map((t) => (
           <li
             key={t.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white/70 px-2.5 py-1.5 md:gap-3 md:rounded-xl md:px-4 md:py-2.5"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-cream-100/70 px-2.5 py-1.5 md:gap-3 md:rounded-xl md:px-4 md:py-2.5"
           >
             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 md:gap-x-3 md:gap-y-1">
               <span className="font-mono text-sm font-semibold text-ink md:text-base">{t.table_no}</span>
@@ -294,7 +291,7 @@ function MainDeskCard({ desk }: { desk: MainDesk }) {
           ) : null}
         </div>
         {desk.status_text ? (
-          <div className="shrink-0 rounded-full bg-white/70 px-2.5 py-1 text-xs font-medium text-ink">
+          <div className="shrink-0 rounded-full bg-cream-100/70 px-2.5 py-1 text-xs font-medium text-ink">
             {desk.status_text}
           </div>
         ) : null}
@@ -345,7 +342,7 @@ function LiveTableCard({
     ? "bg-accent-coral/10"
     : calling
       ? "bg-accent-butter/15"
-      : "bg-white";
+      : "bg-cream-100";
 
   return (
     <div
@@ -384,7 +381,7 @@ function LiveTableCard({
           className={`mt-1.5 rounded-lg border px-2 py-1.5 ${
             table.call_broadcasted_at
               ? "border-accent-butter bg-accent-butter/30"
-              : "border-accent-coral/40 bg-white/70"
+              : "border-accent-coral/40 bg-cream-100/70"
           }`}
         >
           <div
@@ -446,11 +443,11 @@ function CallModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-card"
+        className="w-full max-w-sm rounded-2xl bg-cream-100 p-5 shadow-card"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-muted">
@@ -512,7 +509,7 @@ function CallChoiceButton({
     >
       <span className="font-mono text-xs uppercase tracking-widest text-ink-muted">{tag}</span>
       <span className="flex-1 truncate text-sm font-medium text-ink">{name}</span>
-      <span className="text-xs text-accent-coral">唱名未到 →</span>
+      <span className="text-xs text-accent-coral">唱名未到</span>
     </button>
   );
 }

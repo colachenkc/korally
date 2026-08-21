@@ -33,7 +33,7 @@ export function ResetMatchesButton() {
       <button
         onClick={handleClick}
         disabled={submitting}
-        className="rounded-full border border-accent-coral bg-white px-4 py-1.5 text-sm font-medium text-accent-coral hover:bg-accent-coral hover:text-white disabled:opacity-50"
+        className="rounded-full border border-accent-coral bg-cream-100 px-4 py-1.5 text-sm font-medium text-accent-coral hover:bg-accent-coral hover:text-white disabled:opacity-50"
       >
         {submitting ? "執行中⋯" : "清除所有比賽紀錄"}
       </button>

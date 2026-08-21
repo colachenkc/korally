@@ -228,9 +228,6 @@ export default function CheckInPage() {
   return (
     <div className="space-y-5">
       <header>
-        <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-          Check-in scanner
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">掃描報到</h1>
         <p className="mt-1 text-sm text-ink-muted">
           將學生證條碼對準畫面中央，掃到後會自動標記為已報到。
@@ -245,7 +242,7 @@ export default function CheckInPage() {
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-3">
-          <div className="relative overflow-hidden rounded-2xl border border-cream-200 bg-ink/90 shadow-card">
+          <div className="relative overflow-hidden rounded-2xl border border-cream-200 bg-black/90 shadow-card">
             <video
               ref={videoRef}
               playsInline
@@ -276,7 +273,7 @@ function ScanOverlay() {
         <span className="absolute -bottom-0.5 -left-0.5 h-4 w-4 rounded-bl-md border-b-[3px] border-l-[3px] border-white" />
         <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-br-md border-b-[3px] border-r-[3px] border-white" />
         {/* Center crosshair line — barcode should land flat across this */}
-        <span className="absolute left-2 right-2 top-1/2 h-px -translate-y-1/2 bg-white/35" />
+        <span className="absolute left-2 right-2 top-1/2 h-px -translate-y-1/2 bg-cream-100/35" />
         <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.28em] text-white/85">
           Align barcode here
         </span>
@@ -288,7 +285,7 @@ function ScanOverlay() {
 function LatestCard({ entry }: { entry: LogEntry | null }) {
   if (!entry) {
     return (
-      <div className="rounded-2xl border border-dashed border-cream-200 bg-white/60 p-6 text-center text-sm text-ink-muted">
+      <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100/60 p-6 text-center text-sm text-ink-muted">
         尚未掃到任何學生證
       </div>
     );
@@ -335,7 +332,7 @@ function ScanLog({ log }: { log: LogEntry[] }) {
   );
 
   return (
-    <div className="rounded-2xl border border-cream-200 bg-white p-4 shadow-card">
+    <div className="rounded-2xl border border-cream-200 bg-cream-100 p-4 shadow-card">
       <div className="mb-2 flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink-muted">
           Recent scans

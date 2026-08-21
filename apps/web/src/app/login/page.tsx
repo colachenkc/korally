@@ -41,10 +41,7 @@ function LoginForm() {
     <div className="mx-auto mt-8 max-w-md">
       {/* Gradient outer border */}
       <div className="rounded-3xl bg-[linear-gradient(to_right,#fec796,#fb5646,#827acc,#2e79d8)] p-[2px] shadow-pop">
-        <div className="rounded-[22px] bg-white px-8 py-10">
-          <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-            Admin
-          </div>
+        <div className="rounded-[22px] bg-cream-100 px-8 py-10">
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-ink">管理員登入</h1>
           <p className="mt-2 text-sm text-ink-muted">登入後台修改資料</p>
 
@@ -59,7 +56,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
-                className="w-full rounded-xl border border-cream-200 bg-cream-50 px-4 py-2.5 text-base text-ink focus:border-ink/40 focus:bg-white focus:outline-none"
+                className="w-full rounded-xl border border-cream-200 bg-cream-50 px-4 py-2.5 text-base text-ink focus:border-ink/40 focus:bg-cream-100 focus:outline-none"
                 required
               />
             </div>

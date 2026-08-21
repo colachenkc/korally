@@ -2,10 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-1: 330 100% 40%; /* Dark Neon Pink */
+    --color-2: 140 100% 55%; /* Bright Electric Green */
+    --color-3: 210 100% 30%; /* Deep Neon Blue */
+    --color-4: 60 100% 70%; /* Light Neon Yellow */
+    --color-5: 295 100% 45%; /* Dark Neon Purple */
+    --brand: 76 90% 62%; /* Bright lime (Fincash-style) */
+  }
+
+  .dark {
+    --color-1: 330 100% 40%;
+    --color-2: 140 100% 55%;
+    --color-3: 210 100% 30%;
+    --color-4: 60 100% 70%;
+    --color-5: 295 100% 45%;
+    --brand: 50 100% 50%;
+  }
+}
+
 html {
   /* Always reserve scrollbar space so content doesn't shift when dropdowns
      or modals briefly make the page taller than the viewport. */
   scrollbar-gutter: stable;
+  /* Smooth-scroll for in-page anchor links (e.g. hero → footer). */
+  scroll-behavior: smooth;
 }
 
 html,
@@ -49,4 +71,20 @@ body {
 
 .animate-fade-in-up {
   animation: fadeInUp 500ms ease-out both;
+}
+
+/* Header slides in slightly after page paint so main content is seen first. */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-header-in {
+  animation: fadeInDown 700ms cubic-bezier(0.22, 0.9, 0.35, 1) 350ms both;
 }

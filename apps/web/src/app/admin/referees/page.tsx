@@ -103,9 +103,6 @@ export default function AdminRefereesPage() {
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-            Admin / Referees
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-ink">裁判名單</h1>
           <p className="mt-1 text-sm text-ink-muted">
             建立後可在「球檯管理」用點選方式快速指派裁判。
@@ -113,7 +110,7 @@ export default function AdminRefereesPage() {
         </div>
         <button
           onClick={startNew}
-          className="rounded-full border border-ink/15 bg-white px-3 py-1 text-sm text-ink-soft hover:border-ink/30"
+          className="rounded-full border border-ink/15 bg-cream-100 px-3 py-1 text-sm text-ink-soft hover:border-ink/30"
         >
           + 新增裁判
         </button>
@@ -126,7 +123,7 @@ export default function AdminRefereesPage() {
       ) : null}
 
       {referees.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-12 text-center text-sm text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100 p-12 text-center text-sm text-ink-muted">
           尚未建立任何裁判。
         </div>
       ) : (
@@ -134,7 +131,7 @@ export default function AdminRefereesPage() {
           {referees.map((r) => (
             <li
               key={r.id}
-              className="rounded-xl border border-cream-200 bg-white p-3 shadow-card"
+              className="rounded-xl border border-cream-200 bg-cream-100 p-3 shadow-card"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -168,19 +165,16 @@ export default function AdminRefereesPage() {
 
       {editingId !== null ? (
         <div
-          className="fixed inset-0 z-30 flex items-center justify-center bg-ink/40 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={cancelEdit}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-full w-full max-w-md flex-col rounded-2xl border border-cream-200 bg-white shadow-pop"
+            className="flex max-h-full w-full max-w-md flex-col rounded-2xl border border-cream-200 bg-cream-100 shadow-pop"
           >
             <div className="overflow-y-auto p-6">
               <div className="mb-4 flex items-baseline justify-between">
                 <div>
-                  <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-                    {editingId === "new" ? "New referee" : `Edit / ${form.name}`}
-                  </div>
                   <h2 className="mt-1 text-xl font-semibold text-ink">
                     {editingId === "new" ? "新增裁判" : "編輯裁判"}
                   </h2>
@@ -221,7 +215,7 @@ export default function AdminRefereesPage() {
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="rounded-full border border-ink/15 bg-white px-4 py-1.5 text-sm text-ink-soft hover:bg-cream-100"
+                    className="rounded-full border border-ink/15 bg-cream-100 px-4 py-1.5 text-sm text-ink-soft hover:bg-cream-100"
                   >
                     取消
                   </button>

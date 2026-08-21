@@ -1,7 +1,19 @@
 import Image from "next/image";
+import Link from "next/link";
+import { CalendarDays, ChevronDown, MapPin } from "lucide-react";
 
+import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
+import { HomeFooter } from "@/components/layout/HomeFooter";
 import { API_V1 } from "@/lib/api-client";
-import { TOURNAMENT_STATUS_LABEL, type Tournament, type TournamentStatus } from "@/types/models";
+import type { Tournament } from "@/types/models";
+
+const HIGHLIGHT = "桌球";
+
+function splitTitle(name: string): [string, string, string] | null {
+  const idx = name.indexOf(HIGHLIGHT);
+  if (idx < 0) return null;
+  return [name.slice(0, idx), HIGHLIGHT, name.slice(idx + HIGHLIGHT.length)];
+}
 
 async function fetchTournament(): Promise<Tournament | null> {
   try {
@@ -14,100 +26,95 @@ async function fetchTournament(): Promise<Tournament | null> {
   }
 }
 
-function statusLabel(s: string): string {
-  return TOURNAMENT_STATUS_LABEL[s as TournamentStatus] ?? s;
-}
-
 export default async function HomePage() {
   const tournament = await fetchTournament();
 
   return (
-    <>
-      <div className="flex min-h-[calc(100vh-160px)] flex-col">
-        <div className="space-y-10 md:space-y-20">
-          {tournament ? (
-            <section className="pt-2 md:pt-6">
-              <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-ink-muted">
-                Tournament
-              </div>
-              <h1 className="mt-3 font-serif text-3xl font-medium italic leading-[1.1] tracking-tight text-ink sm:text-4xl md:mt-5 md:text-6xl md:leading-[1.05] lg:text-7xl">
-                {tournament.name}
-              </h1>
+    <div className="flex min-h-[calc(100vh-160px)] flex-col">
+      {tournament ? (
+        <section className="mx-auto w-full max-w-4xl pt-6 text-center md:pt-16">
+          <h1 className="font-sans text-4xl font-black leading-[1.1] tracking-tight text-ink sm:text-5xl md:text-7xl lg:text-[5.5rem]">
+            {(() => {
+              const parts = splitTitle(tournament.name);
+              if (!parts) return tournament.name;
+              const [before, hit, after] = parts;
+              return (
+                <>
+                  {before}
+                  <span className="text-brand">{hit}</span>
+                  {after}
+                </>
+              );
+            })()}
+          </h1>
 
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-ink-soft md:mt-8 md:gap-x-5 md:gap-y-2">
-                {tournament.venue ? (
-                  <span className="text-base md:text-xl">{tournament.venue}</span>
-                ) : null}
-                {tournament.start_date ? (
-                  <>
-                    <span className="text-ink-faint">·</span>
-                    <span className="font-mono text-sm text-ink-muted md:text-base">
-                      {tournament.start_date}
-                      {tournament.end_date && tournament.end_date !== tournament.start_date
-                        ? ` → ${tournament.end_date}`
-                        : ""}
-                    </span>
-                  </>
-                ) : null}
-              </div>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-2 md:mt-10 md:gap-3">
+            {tournament.venue ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-cream-300 bg-cream-100 px-4 py-1.5 text-sm text-ink-soft md:text-base">
+                <MapPin className="h-4 w-4 text-brand" strokeWidth={2.25} />
+                {tournament.venue}
+              </span>
+            ) : null}
+            {tournament.start_date ? (
+              <span className="inline-flex items-center gap-2 rounded-full border border-cream-300 bg-cream-100 px-4 py-1.5 font-mono text-sm text-ink-soft md:text-base">
+                <CalendarDays className="h-4 w-4 text-brand" strokeWidth={2.25} />
+                {tournament.start_date}
+                {tournament.end_date && tournament.end_date !== tournament.start_date
+                  ? ` → ${tournament.end_date}`
+                  : ""}
+              </span>
+            ) : null}
+          </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2 md:mt-6">
-                <span className="rounded-full border border-ink/15 bg-white/60 px-3 py-1 text-xs font-medium text-ink-soft backdrop-blur">
-                  {statusLabel(tournament.status)}
-                </span>
-                {tournament.current_schedule_time ? (
-                  <div className="inline-flex items-center gap-2 rounded-full bg-accent-butter/50 px-3 py-1 text-xs text-ink backdrop-blur md:py-1.5 md:text-sm">
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-ink-muted md:text-[11px]">
-                      now
-                    </span>
-                    <span className="font-medium">{tournament.current_schedule_time}</span>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          ) : (
-            <section className="rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-4 text-sm text-accent-coral">
-              無法連線到後端 API，請確認 uvicorn 於 http://localhost:8000 啟動。
-            </section>
-          )}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-10">
+            <Link
+              href="/live"
+              className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
+            >
+              即時監控
+            </Link>
+            <Link
+              href="/schedule"
+              className="rounded-xl border border-cream-300 bg-cream-100 px-6 py-3 text-sm font-semibold text-ink transition hover:bg-cream-200"
+            >
+              查看賽程
+            </Link>
+          </div>
 
-          <section className="max-w-3xl">
-            <div className="flex items-baseline gap-3">
-              <div className="font-mono text-[11px] uppercase tracking-[0.32em] text-ink-muted">
-                Announcement
-              </div>
-              <span className="h-px flex-1 bg-ink/10" />
-            </div>
-            <h2 className="mt-4 font-serif text-3xl font-medium italic text-ink md:text-4xl">
-              大會公告
-            </h2>
-            {tournament?.announcement_text ? (
-              <pre className="mt-5 whitespace-pre-wrap font-sans text-base leading-relaxed text-ink-soft md:text-lg">
-                {tournament.announcement_text}
-              </pre>
-            ) : (
-              <p className="mt-5 text-sm text-ink-muted">
-                尚未張貼公告。請至 管理後台 → 賽事資訊與公告 編輯。
-              </p>
-            )}
-          </section>
+          <a
+            href="#site-footer"
+            aria-label="向下捲動"
+            className="group mx-auto mt-12 inline-flex h-10 w-10 items-center justify-center rounded-full border border-cream-300 text-ink-muted transition hover:border-brand hover:text-brand md:mt-16"
+          >
+            <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
+          </a>
+        </section>
+      ) : (
+        <section className="mx-auto w-full max-w-2xl rounded-2xl border border-accent-coral/30 bg-accent-coral/10 p-4 text-sm text-accent-coral">
+          無法連線到後端 API，請確認 uvicorn 於 http://localhost:8000 啟動。
+        </section>
+      )}
+
+      {tournament?.announcement_text ? (
+        <div className="mx-auto mt-10 w-full max-w-3xl md:mt-16">
+          <AnnouncementBanner text={tournament.announcement_text} />
         </div>
+      ) : null}
 
-        <div className="mt-auto pt-8 md:pt-16">
-          <Marquee />
-        </div>
+      <div className="mt-auto pt-8 md:pt-16">
+        <Marquee />
       </div>
-    </>
+
+      <HomeFooter />
+    </div>
   );
 }
 
 function Marquee() {
-  // 6 copies of [logo, @PopGkuai] so total width is comfortably wider than
-  // most viewports; animation translates -16.6666% per cycle (one set scrolls past).
   return (
     <div
       aria-hidden
-      className="-mx-[calc(50vw-50%)] overflow-hidden border-y border-cream-200/70 py-4"
+      className="-mx-[calc(50vw-50%)] overflow-hidden border-y border-cream-200 py-4"
     >
       <div className="flex w-max animate-marquee items-center gap-10 whitespace-nowrap">
         {Array.from({ length: 6 }).map((_, i) => (
@@ -117,10 +124,10 @@ function Marquee() {
               alt="NTUTTST"
               width={689}
               height={362}
-              className="h-12 w-auto shrink-0 md:h-16 lg:h-20"
+              className="h-12 w-auto shrink-0 opacity-70 invert md:h-16 lg:h-20"
               priority={i === 0}
             />
-            <span className="inline-block shrink-0 py-1.5 font-serif text-xl font-medium italic leading-none text-ink/70 md:text-2xl lg:text-3xl">
+            <span className="inline-block shrink-0 py-1.5 font-serif text-xl font-medium italic leading-none text-ink-muted md:text-2xl lg:text-3xl">
               @PopGkuai
             </span>
           </div>

@@ -104,9 +104,6 @@ export default function AdminTournamentPage() {
   return (
     <div className="space-y-5">
       <header>
-        <div className="font-mono text-[11px] uppercase tracking-[0.28em] text-ink-muted">
-          Admin / Tournament
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-ink">賽事資訊與公告</h1>
       </header>
 
@@ -119,13 +116,13 @@ export default function AdminTournamentPage() {
       {loading && !tournament ? (
         <div className="text-sm text-ink-muted">載入中⋯</div>
       ) : !tournament ? (
-        <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-12 text-center text-sm text-ink-muted">
+        <div className="rounded-2xl border border-dashed border-cream-200 bg-cream-100 p-12 text-center text-sm text-ink-muted">
           尚未建立賽事。
         </div>
       ) : (
         <form
           onSubmit={handleSave}
-          className="max-w-2xl space-y-5 rounded-2xl border border-cream-200 bg-white p-6 shadow-card"
+          className="max-w-2xl space-y-5 rounded-2xl border border-cream-200 bg-cream-100 p-6 shadow-card"
         >
           <Field label="賽事名稱">
             <input
